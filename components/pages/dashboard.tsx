@@ -30,7 +30,249 @@ const initialConversations: Conversation[] = [
   { id: "5", title: "Continuing Education Policy", date: "PREVIOUS 7 DAYS" },
   { id: "6", title: "Marketing Material Request", date: "PREVIOUS 7 DAYS" },
   { id: "7", title: "IT Support for New Laptop", date: "PREVIOUS 7 DAYS" },
+  { id: "8", title: "Employee Travel Reimbursement", date: "PREVIOUS 7 DAYS" },
+  { id: "9", title: "Healthcare Enrollment Follow-up", date: "PREVIOUS 7 DAYS" },
+  { id: "10", title: "Quarterly Budget Guidelines", date: "PREVIOUS 7 DAYS" },
+  { id: "11", title: "New Hire Equipment Checklist", date: "PREVIOUS 7 DAYS" },
+  { id: "12", title: "Security Awareness Refresher", date: "PREVIOUS 7 DAYS" },
 ]
+
+const initialMessagesByConversation: Record<string, ConversationMessage[]> = {
+  "1": [
+    {
+      id: "1-1-user",
+      sender: "user",
+      text: "Can you clarify how many PTO days I have left this year?",
+    },
+    {
+      id: "1-2-bot",
+      sender: "bot",
+      text: "Sure thing! Full-time employees accrue 15 days annually. You currently have 7 days remaining in your balance.",
+    },
+    {
+      id: "1-3-user",
+      sender: "user",
+      text: "Great, thanks! Do unused days roll over?",
+    },
+    {
+      id: "1-4-bot",
+      sender: "bot",
+      text: "Unused days do not roll over, but you can request to cash out up to 5 days before December 15th.",
+    },
+  ],
+  "2": [
+    {
+      id: "2-1-user",
+      sender: "user",
+      text: "Do we have a standardized client onboarding template I can use for new engagements?",
+    },
+    {
+      id: "2-2-bot",
+      sender: "bot",
+      text: "Yes! Check the Knowledge Library under Sales Enablement → Client Experience. The 'BH Onboarding Playbook' includes slides, email copy, and a kickoff checklist.",
+    },
+    {
+      id: "2-3-user",
+      sender: "user",
+      text: "Is it okay to customize the slide deck?",
+    },
+    {
+      id: "2-4-bot",
+      sender: "bot",
+      text: "Absolutely—just keep the first three intro slides intact and update the timeline to match the client scope.",
+    },
+  ],
+  "3": [
+    {
+      id: "3-1-user",
+      sender: "user",
+      text: "What supporting documents are required for expense reporting?",
+    },
+    {
+      id: "3-2-bot",
+      sender: "bot",
+      text: "Receipts are needed for any expense over $25. Please include the client or project code when you submit.",
+    },
+    {
+      id: "3-3-user",
+      sender: "user",
+      text: "Is there a deadline for submitting receipts after travel?",
+    },
+    {
+      id: "3-4-bot",
+      sender: "bot",
+      text: "Yes, please submit within 14 days of your travel end date so Accounting can close the period on time.",
+    },
+  ],
+  "4": [
+    {
+      id: "4-1-user",
+      sender: "user",
+      text: "What is the current 401(k) company match?",
+    },
+    {
+      id: "4-2-bot",
+      sender: "bot",
+      text: "Beard Harris matches 50% of your contributions up to 6% of eligible compensation.",
+    },
+    {
+      id: "4-3-user",
+      sender: "user",
+      text: "When can I change my contribution percentage?",
+    },
+    {
+      id: "4-4-bot",
+      sender: "bot",
+      text: "You can update it anytime through Principal's online portal. Changes typically take effect on the next payroll cycle.",
+    },
+  ],
+  "5": [
+    {
+      id: "5-1-user",
+      sender: "user",
+      text: "I'm planning a certification course—will the continuing education policy cover the cost?",
+    },
+    {
+      id: "5-2-bot",
+      sender: "bot",
+      text: "Beard Harris reimburses up to $1,200 per fiscal year for approved courses. You'll need to submit the syllabus and receipt.",
+    },
+  ],
+  "6": [
+    {
+      id: "6-1-user",
+      sender: "user",
+      text: "Marketing asked me to provide new brochure copies—what’s the request process?",
+    },
+    {
+      id: "6-2-bot",
+      sender: "bot",
+      text: "Submit a ticket through the Marketing Hub form. Include quantity, brand variant, and the event or campaign date.",
+    },
+    {
+      id: "6-3-user",
+      sender: "user",
+      text: "How long does fulfillment usually take?",
+    },
+    {
+      id: "6-4-bot",
+      sender: "bot",
+      text: "Printed materials ship within 5 business days. Digital assets are delivered within 48 hours.",
+    },
+  ],
+  "7": [
+    {
+      id: "7-1-user",
+      sender: "user",
+      text: "My new laptop arrived—how do I get it configured for remote access?",
+    },
+    {
+      id: "7-2-bot",
+      sender: "bot",
+      text: "Run the BH Setup app located on the desktop. It installs VPN, Office, and security tools automatically.",
+    },
+    {
+      id: "7-3-user",
+      sender: "user",
+      text: "Do I need to submit anything when I return my old device?",
+    },
+    {
+      id: "7-4-bot",
+      sender: "bot",
+      text: "Yes, attach the prepaid FedEx label included in your package and drop it off within 7 days. IT will notify you once it's received.",
+    },
+  ],
+  "8": [
+    {
+      id: "8-1-user",
+      sender: "user",
+      text: "What rate should I use for mileage when traveling between client sites?",
+    },
+    {
+      id: "8-2-bot",
+      sender: "bot",
+      text: "Use the current IRS mileage rate of $0.67 per mile. Add the total to the 'Travel' section of your reimbursement form.",
+    },
+  ],
+  "9": [
+    {
+      id: "9-1-user",
+      sender: "user",
+      text: "I submitted my healthcare enrollment—how do I confirm everything went through?",
+    },
+    {
+      id: "9-2-bot",
+      sender: "bot",
+      text: "Log into Paylocity → Self-Service Portal → Benefits. You’ll see a green check next to the plans you selected once HR approves them.",
+    },
+    {
+      id: "9-3-user",
+      sender: "user",
+      text: "When do the new benefits take effect?",
+    },
+    {
+      id: "9-4-bot",
+      sender: "bot",
+      text: "Coverage starts on the first day of the month following your submission. Payroll deductions will reflect on that paycheck too.",
+    },
+  ],
+  "10": [
+    {
+      id: "10-1-user",
+      sender: "user",
+      text: "Can you remind me what should be included in the quarterly budget update?",
+    },
+    {
+      id: "10-2-bot",
+      sender: "bot",
+      text: "Each department submits updated spend-to-date, forecast for the remaining quarters, and any variance explanations over 5%.",
+    },
+    {
+      id: "10-3-user",
+      sender: "user",
+      text: "Is there a template we should use?",
+    },
+    {
+      id: "10-4-bot",
+      sender: "bot",
+      text: "Yes—the FP&A team shared a Google Sheet last quarter titled 'Q3 Budget Rollup'. Make a copy and update your tabs.",
+    },
+  ],
+  "11": [
+    {
+      id: "11-1-user",
+      sender: "user",
+      text: "Do we provide monitors to new hires working remotely?",
+    },
+    {
+      id: "11-2-bot",
+      sender: "bot",
+      text: "Yes. New hires can request up to two 24-inch monitors. Submit the equipment request form two weeks before their start date.",
+    },
+  ],
+  "12": [
+    {
+      id: "12-1-user",
+      sender: "user",
+      text: "I missed last month’s security awareness refresher—how can I catch up?",
+    },
+    {
+      id: "12-2-bot",
+      sender: "bot",
+      text: "The on-demand module is available in KnowBe4. Look for 'BH Security Refresher Q3' and complete it before the end of the month.",
+    },
+    {
+      id: "12-3-user",
+      sender: "user",
+      text: "Do I need to notify anyone after I complete it?",
+    },
+    {
+      id: "12-4-bot",
+      sender: "bot",
+      text: "Nope—the platform reports completion automatically to Compliance. Save your certificate in case your manager asks.",
+    },
+  ],
+}
 
 const STATIC_BOT_REPLY =
   "Thanks for reaching out! This is a placeholder response from the Knowledge Bot while we wire up the real service."
@@ -43,7 +285,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
   )
   const [messagesByConversation, setMessagesByConversation] = useState<
     Record<string, ConversationMessage[]>
-  >({})
+  >(initialMessagesByConversation)
   const [messageInput, setMessageInput] = useState("")
   const [isBotTyping, setIsBotTyping] = useState(false)
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
@@ -182,6 +424,64 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
       setIsBotTyping(false)
     }, 450)
+  }
+
+  const renderComposer = (variant: "floating" | "docked") => {
+    const baseClasses =
+      variant === "floating"
+        ? "mx-auto mt-6 flex w-full max-w-2xl items-end gap-4 rounded-full border border-border/40 bg-background/95 px-5 py-3 shadow-sm backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+        : "mx-auto flex w-full max-w-3xl items-end gap-4 rounded-full border border-border/40 bg-background/90 px-5 py-3 shadow-none backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+
+    return (
+      <form onSubmit={handleSendMessage} className={baseClasses}>
+        <button
+          type="button"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition hover:bg-primary/15"
+          aria-label="Add attachment"
+          disabled={!activeConversation}
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+
+        <textarea
+          rows={1}
+          value={messageInput}
+          onChange={(event) => setMessageInput(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault()
+              if (activeConversation) {
+                event.currentTarget.form?.requestSubmit()
+              }
+            }
+          }}
+          placeholder={
+            activeConversation ? "Ask anything" : "Create a session to start chatting"
+          }
+          disabled={!activeConversation}
+          className="flex-1 resize-none bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
+        />
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted disabled:opacity-50"
+            aria-label="Start voice input"
+            disabled={!activeConversation}
+          >
+            <Mic className="h-5 w-5" />
+          </button>
+          <button
+            type="submit"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+            aria-label="Send message"
+            disabled={!activeConversation || !messageInput.trim()}
+          >
+            <Send className="h-5 w-5" />
+          </button>
+        </div>
+      </form>
+    )
   }
 
   return (
@@ -355,6 +655,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                             Ask anything about Beard Harris policies, processes, and resources to get started.
                           </p>
                         </div>
+                        {renderComposer("floating")}
                       </div>
                     )
                   ) : (
@@ -374,52 +675,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
               </div>
             </div>
 
-            <footer className="px-8 pb-10 pt-6">
-              <form
-                onSubmit={handleSendMessage}
-                className="mx-auto flex w-full max-w-3xl items-end gap-4 rounded-full border border-border/20 bg-background/90 px-5 py-3 shadow-none backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
-              >
-                <button
-                  type="button"
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition hover:bg-primary/15"
-                  aria-label="Add attachment"
-                >
-                  <Plus className="h-5 w-5" />
-                </button>
-
-                <textarea
-                  rows={1}
-                  value={messageInput}
-                  onChange={(event) => setMessageInput(event.target.value)}
-                  placeholder={
-                    activeConversation
-                      ? "Ask anything"
-                      : "Create a session to start chatting"
-                  }
-                  disabled={!activeConversation}
-                  className="flex-1 resize-none bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-                />
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted"
-                    aria-label="Start voice input"
-                    disabled={!activeConversation}
-                  >
-                    <Mic className="h-5 w-5" />
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
-                    aria-label="Send message"
-                    disabled={!activeConversation || !messageInput.trim()}
-                  >
-                    <Send className="h-5 w-5" />
-                  </button>
-                </div>
-              </form>
-            </footer>
+            {hasMessages ? <footer className="px-8 pb-10 pt-6">{renderComposer("docked")}</footer> : null}
           </div>
         </main>
       </div>

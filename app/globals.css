@@ -155,3 +155,17 @@
   animation: gradient-flow 3s ease infinite;
   font-weight: 700;
 }
+
+/* Input section gradient background */
+.bh-input-gradient {
+  background: linear-gradient(
+    135deg,
+    #f4f8fb 0%,
+    #e3edf4 25%,
+    #f0f6fb 50%,
+    #e3edf4 75%,
+    #f4f8fb 100%
+  );
+  background-size: 200% 200%;
+  animation: gradient-flow 8s ease infinite;
+}

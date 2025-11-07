@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Building2, ArrowRight } from "lucide-react"
 
@@ -25,13 +26,16 @@ export function Login({ onLogin }: LoginProps) {
       {/* Header */}
       <div className="w-full border-b border-border bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xl">BH</span>
-            </div>
-            <div>
-              <div className="text-lg font-bold leading-tight bh-gradient-text">Beaird Harris</div>
-              <div className="text-xs text-muted-foreground">Knowledge Bot</div>
+          <div className="flex items-center">
+            <div className="relative h-10 w-auto flex-shrink-0">
+              <Image
+                src="/beaird-harris-logo.png"
+                alt="Beaird Harris"
+                width={150}
+                height={35}
+                className="h-10 w-auto object-contain"
+                priority
+              />
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { FormEvent, useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import { Search, Settings, LogOut, MessageCircle, ChevronDown, Plus, Mic, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -429,8 +430,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const renderComposer = (variant: "floating" | "docked") => {
     const baseClasses =
       variant === "floating"
-        ? "mx-auto mt-6 flex w-full max-w-2xl items-end gap-4 rounded-full border border-border/40 bg-background/95 px-5 py-3 shadow-sm backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
-        : "mx-auto flex w-full max-w-3xl items-end gap-4 rounded-full border border-border/40 bg-background/90 px-5 py-3 shadow-none backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+        ? "mx-auto mt-6 flex w-full max-w-2xl items-end gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-sm backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+        : "mx-auto flex w-full max-w-3xl items-end gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-none backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
 
     return (
       <form onSubmit={handleSendMessage} className={baseClasses}>
@@ -490,11 +491,17 @@ export function Dashboard({ onLogout }: DashboardProps) {
       <div className="w-80 border-r border-border bg-card flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">B</span>
+          <div className="flex items-center justify-center">
+            <div className="relative h-12 w-full flex-shrink-0">
+              <Image
+                src="/beaird-harris-logo.png"
+                alt="Beaird Harris"
+                width={300}
+                height={69}
+                className="h-12 w-full object-contain"
+                priority
+              />
             </div>
-            <span className="font-semibold bh-gradient-text">Beaird Harris</span>
           </div>
         </div>
 

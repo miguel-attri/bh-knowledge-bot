@@ -113,7 +113,7 @@ const initialMessagesByConversation: Record<string, ConversationMessage[]> = {
     {
       id: "4-2-bot",
       sender: "bot",
-      text: "Beard Harris matches 50% of your contributions up to 6% of eligible compensation.",
+      text: "Beaird Harris matches 50% of your contributions up to 6% of eligible compensation.",
     },
     {
       id: "4-3-user",
@@ -135,7 +135,7 @@ const initialMessagesByConversation: Record<string, ConversationMessage[]> = {
     {
       id: "5-2-bot",
       sender: "bot",
-      text: "Beard Harris reimburses up to $1,200 per fiscal year for approved courses. You'll need to submit the syllabus and receipt.",
+      text: "Beaird Harris reimburses up to $1,200 per fiscal year for approved courses. You'll need to submit the syllabus and receipt.",
     },
   ],
   "6": [
@@ -494,7 +494,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
             <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-lg">B</span>
             </div>
-            <span className="font-semibold text-foreground">Beard Harris Knowledge Bot</span>
+            <span className="font-semibold bh-gradient-text">Beaird Harris</span>
           </div>
         </div>
 
@@ -566,7 +566,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
               className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
               <Avatar className="h-8 w-8 bg-muted">
-                <AvatarFallback className="bg-gradient-to-br from-green-400 to-green-500 text-white font-semibold">
+                <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                   AH
                 </AvatarFallback>
               </Avatar>
@@ -590,7 +590,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   onClick={onLogout}
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="w-full justify-start text-destructive hover:text-destructive/90 hover:bg-destructive/10"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
@@ -652,7 +652,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
                             What&apos;s on the agenda today?
                           </h2>
                           <p className="text-muted-foreground">
-                            Ask anything about Beard Harris policies, processes, and resources to get started.
+                            Ask anything about Beaird Harris policies, processes, and resources to get started.
                           </p>
                         </div>
                         {renderComposer("floating")}

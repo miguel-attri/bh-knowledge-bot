@@ -103,6 +103,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
     ? messagesByConversation[activeConversationId] ?? []
     : []
 
+  const hasMessages = activeMessages.length > 0 || isBotTyping
+
   const resetBotTyping = () => {
     if (replyTimeoutRef.current) {
       clearTimeout(replyTimeoutRef.current)
@@ -256,7 +258,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <header className="flex items-center justify-end px-6 py-4 border-b border-border bg-background/80">
+        <header className="flex items-center justify-end px-6 py-4 bg-background/80 backdrop-blur">
           <div className="relative" ref={accountMenuRef}>
             <button
               type="button"
@@ -300,72 +302,82 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
         <main className="flex-1 overflow-hidden">
           <div className="flex h-full flex-col">
-            <div className="flex-1 overflow-y-auto px-6 py-8">
-              {activeConversation ? (
-                activeMessages.length > 0 || isBotTyping ? (
-                  <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-                    {activeMessages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${
-                          message.sender === "user" ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        <div
-                          className={`max-w-[70%] whitespace-pre-wrap break-words rounded-3xl px-4 py-3 text-sm leading-6 shadow-sm ${
-                            message.sender === "user"
-                              ? "bg-primary text-primary-foreground rounded-br-lg"
-                              : "bg-muted text-foreground"
-                          }`}
-                        >
-                          {message.text}
-                        </div>
-                      </div>
-                    ))}
+            <div className="flex-1 px-8 py-10">
+              <div className="mx-auto flex h-full w-full max-w-4xl flex-col gap-8">
+                <div
+                  className={`relative flex-1 ${
+                    hasMessages ? "overflow-y-auto" : "flex items-center justify-center"
+                  } min-h-[320px]`}
+                >
+                  {activeConversation ? (
+                    hasMessages ? (
+                      <div className="mx-auto w-full max-w-3xl space-y-4 px-1 pb-12">
+                        {activeMessages.map((message) => (
+                          <div
+                            key={message.id}
+                            className={`flex ${
+                              message.sender === "user" ? "justify-end" : "justify-start"
+                            }`}
+                          >
+                            <div
+                              className={`max-w-[70ch] whitespace-pre-wrap break-words rounded-3xl px-4 py-3 text-sm leading-6 shadow-sm ${
+                                message.sender === "user"
+                                  ? "bg-primary text-primary-foreground rounded-br-lg"
+                                  : "bg-muted text-foreground"
+                              }`}
+                            >
+                              {message.text}
+                            </div>
+                          </div>
+                        ))}
 
-                    {isBotTyping ? (
-                      <div className="flex justify-start">
-                        <div className="max-w-[70%] rounded-3xl bg-muted px-4 py-3 text-sm text-muted-foreground shadow-sm">
-                          Knowledge Bot is thinking...
+                        {isBotTyping ? (
+                          <div className="flex justify-start">
+                            <div className="max-w-[70ch] rounded-3xl bg-muted px-4 py-3 text-sm text-muted-foreground shadow-sm">
+                              Knowledge Bot is thinking...
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-4 px-8 text-center">
+                        <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
+                          <MessageCircle className="w-12 h-12 text-muted-foreground" />
+                        </div>
+                        <div className="space-y-3">
+                          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                            New conversation
+                          </p>
+                          <h2 className="text-3xl font-semibold text-foreground">
+                            What&apos;s on the agenda today?
+                          </h2>
+                          <p className="text-muted-foreground">
+                            Ask anything about Beard Harris policies, processes, and resources to get started.
+                          </p>
                         </div>
                       </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center text-center space-y-4">
-                    <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
-                      <MessageCircle className="w-12 h-12 text-muted-foreground" />
+                    )
+                  ) : (
+                    <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-4 px-8 text-center">
+                      <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
+                        <MessageCircle className="w-12 h-12 text-muted-foreground" />
+                      </div>
+                      <div className="space-y-2">
+                        <h2 className="text-2xl font-semibold text-foreground">Create a session to get started</h2>
+                        <p className="text-muted-foreground">
+                          Start a new session from the sidebar to begin a conversation.
+                        </p>
+                      </div>
                     </div>
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        New conversation
-                      </p>
-                      <h2 className="text-3xl font-semibold text-foreground">What&apos;s on the agenda today?</h2>
-                      <p className="text-muted-foreground">
-                        Ask anything about Beard Harris policies, processes, and resources to get started.
-                      </p>
-                    </div>
-                  </div>
-                )
-              ) : (
-                <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-                  <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
-                    <MessageCircle className="w-12 h-12 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-2">
-                    <h2 className="text-2xl font-semibold text-foreground">Create a session to get started</h2>
-                    <p className="text-muted-foreground">
-                      Start a new session from the sidebar to begin a conversation.
-                    </p>
-                  </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
 
-            <footer className="border-t border-border px-6 py-6">
+            <footer className="px-8 pb-10 pt-6">
               <form
                 onSubmit={handleSendMessage}
-                className="mx-auto flex w-full max-w-3xl items-end gap-4 rounded-3xl border border-border bg-card px-4 py-3 shadow-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+                className="mx-auto flex w-full max-w-3xl items-end gap-4 rounded-full border border-border/20 bg-background/90 px-5 py-3 shadow-none backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
               >
                 <button
                   type="button"

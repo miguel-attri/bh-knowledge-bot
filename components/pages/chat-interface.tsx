@@ -66,7 +66,7 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
   ])
 
   const [projects, setProjects] = useState<Project[]>([])
-  const [currentConversationId, setCurrentConversationId] = useState<string>(selectedConversationId || "new")
+  const [currentConversationId, setCurrentConversationId] = useState<string>("new")
   const [messages, setMessages] = useState<Message[]>([])
   const [showRenameDialog, setShowRenameDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -75,8 +75,8 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
 
   // Load messages based on selected conversation
   useEffect(() => {
-    if (selectedConversationId && selectedConversationId !== "new") {
-      if (selectedConversationId === "1") {
+    if (currentConversationId && currentConversationId !== "new") {
+      if (currentConversationId === "1") {
         setMessages([
           {
             id: "1",
@@ -110,7 +110,7 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
     } else {
       setMessages([])
     }
-  }, [selectedConversationId])
+  }, [currentConversationId])
 
   const handleNewChat = () => {
     setCurrentConversationId("new")

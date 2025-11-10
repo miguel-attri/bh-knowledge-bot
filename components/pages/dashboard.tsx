@@ -49,9 +49,9 @@ const initialConversations: Conversation[] = [
   { id: "7", title: "IT Support for New Laptop", date: "PREVIOUS 7 DAYS", createdAt: now - 691200000, lastUpdated: now - 648000000 },
   { id: "8", title: "Employee Travel Reimbursement", date: "PREVIOUS 7 DAYS", createdAt: now - 777600000, lastUpdated: now - 720000000 },
   { id: "9", title: "Healthcare Enrollment Follow-up", date: "PREVIOUS 7 DAYS", createdAt: now - 864000000, lastUpdated: now - 792000000 },
-  { id: "10", title: "Quarterly Budget Guidelines", date: "PREVIOUS 7 DAYS", createdAt: now - 950400000, lastUpdated: now - 864000000 },
-  { id: "11", title: "New Hire Equipment Checklist", date: "PREVIOUS 7 DAYS", createdAt: now - 1036800000, lastUpdated: now - 936000000 },
-  { id: "12", title: "Security Awareness Refresher", date: "PREVIOUS 7 DAYS", createdAt: now - 1123200000, lastUpdated: now - 1008000000 },
+  { id: "10", title: "Quarterly Budget Guidelines", date: "OLDER", createdAt: now - 950400000, lastUpdated: now - 864000000 },
+  { id: "11", title: "New Hire Equipment Checklist", date: "OLDER", createdAt: now - 1036800000, lastUpdated: now - 936000000 },
+  { id: "12", title: "Security Awareness Refresher", date: "OLDER", createdAt: now - 1123200000, lastUpdated: now - 1008000000 },
 ]
 
 const initialMessagesByConversation: Record<string, ConversationMessage[]> = {
@@ -342,9 +342,7 @@ const markdownComponents = {
 export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [conversationsList, setConversationsList] = useState<Conversation[]>(initialConversations)
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(
-    initialConversations[0]?.id ?? null,
-  )
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [messagesByConversation, setMessagesByConversation] = useState<
     Record<string, ConversationMessage[]>
   >(initialMessagesByConversation)
@@ -514,6 +512,24 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
     syncTextareaHeight(textareaRef.current)
   }, [messageInput, activeConversationId, syncTextareaHeight])
 
+  // Function to calculate date category based on timestamp
+  const getDateCategory = (timestamp: number): string => {
+    const now = Date.now()
+    const diff = now - timestamp
+    const oneDay = 24 * 60 * 60 * 1000
+    const sevenDays = 7 * oneDay
+
+    if (diff < oneDay) {
+      return "TODAY"
+    } else if (diff < 2 * oneDay) {
+      return "YESTERDAY"
+    } else if (diff < sevenDays) {
+      return "PREVIOUS 7 DAYS"
+    } else {
+      return "OLDER"
+    }
+  }
+
   const filteredConversations = conversationsList.filter((conversation) => {
     const matchesSearch = conversation.title.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesArchiveFilter = showArchived ? conversation.archived : !conversation.archived
@@ -521,14 +537,16 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   })
 
   const groupedConversations = filteredConversations.reduce((acc, conv) => {
-    if (!acc[conv.date]) {
-      acc[conv.date] = []
+    // Use dynamic date category based on lastUpdated timestamp
+    const dateCategory = getDateCategory(conv.lastUpdated)
+    if (!acc[dateCategory]) {
+      acc[dateCategory] = []
     }
-    acc[conv.date].push(conv)
+    acc[dateCategory].push(conv)
     return acc
   }, {} as Record<string, Conversation[]>)
 
-  const dateOrder = ["TODAY", "YESTERDAY", "PREVIOUS 7 DAYS"]
+  const dateOrder = ["TODAY", "YESTERDAY", "PREVIOUS 7 DAYS", "OLDER"]
   
   const archivedConversations = conversationsList.filter((conv) => conv.archived)
 
@@ -561,7 +579,7 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
     const newConversation: Conversation = {
       id: now.toString(),
       title: "New Conversation",
-      date: "TODAY",
+      date: "TODAY", // This will be calculated dynamically in grouping
       createdAt: now,
       lastUpdated: now,
       archived: false,

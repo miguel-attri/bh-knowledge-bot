@@ -27,6 +27,7 @@ interface Conversation {
   id: string
   title: string
   date: string
+  timestamp: number
   createdAt: number
   lastUpdated: number
   archived?: boolean
@@ -40,18 +41,18 @@ interface ConversationMessage {
 
 const now = Date.now()
 const initialConversations: Conversation[] = [
-  { id: "1", title: "PTO Policy Inquiry", date: "TODAY", createdAt: now - 3600000, lastUpdated: now - 1800000 },
-  { id: "2", title: "Template for Client Onboarding", date: "TODAY", createdAt: now - 7200000, lastUpdated: now - 3600000 },
-  { id: "3", title: "Expense Reporting Guidelines", date: "YESTERDAY", createdAt: now - 172800000, lastUpdated: now - 169200000 },
-  { id: "4", title: "401(k) Contribution Limits", date: "YESTERDAY", createdAt: now - 172800000, lastUpdated: now - 165600000 },
-  { id: "5", title: "Continuing Education Policy", date: "PREVIOUS 7 DAYS", createdAt: now - 518400000, lastUpdated: now - 504000000 },
-  { id: "6", title: "Marketing Material Request", date: "PREVIOUS 7 DAYS", createdAt: now - 604800000, lastUpdated: now - 576000000 },
-  { id: "7", title: "IT Support for New Laptop", date: "PREVIOUS 7 DAYS", createdAt: now - 691200000, lastUpdated: now - 648000000 },
-  { id: "8", title: "Employee Travel Reimbursement", date: "PREVIOUS 7 DAYS", createdAt: now - 777600000, lastUpdated: now - 720000000 },
-  { id: "9", title: "Healthcare Enrollment Follow-up", date: "PREVIOUS 7 DAYS", createdAt: now - 864000000, lastUpdated: now - 792000000 },
-  { id: "10", title: "Quarterly Budget Guidelines", date: "OLDER", createdAt: now - 950400000, lastUpdated: now - 864000000 },
-  { id: "11", title: "New Hire Equipment Checklist", date: "OLDER", createdAt: now - 1036800000, lastUpdated: now - 936000000 },
-  { id: "12", title: "Security Awareness Refresher", date: "OLDER", createdAt: now - 1123200000, lastUpdated: now - 1008000000 },
+  { id: "1", title: "PTO Policy Inquiry", date: "TODAY", timestamp: now - 1800000, createdAt: now - 3600000, lastUpdated: now - 1800000 },
+  { id: "2", title: "Template for Client Onboarding", date: "TODAY", timestamp: now - 3600000, createdAt: now - 7200000, lastUpdated: now - 3600000 },
+  { id: "3", title: "Expense Reporting Guidelines", date: "YESTERDAY", timestamp: now - 169200000, createdAt: now - 172800000, lastUpdated: now - 169200000 },
+  { id: "4", title: "401(k) Contribution Limits", date: "YESTERDAY", timestamp: now - 165600000, createdAt: now - 172800000, lastUpdated: now - 165600000 },
+  { id: "5", title: "Continuing Education Policy", date: "PREVIOUS 7 DAYS", timestamp: now - 504000000, createdAt: now - 518400000, lastUpdated: now - 504000000 },
+  { id: "6", title: "Marketing Material Request", date: "PREVIOUS 7 DAYS", timestamp: now - 576000000, createdAt: now - 604800000, lastUpdated: now - 576000000 },
+  { id: "7", title: "IT Support for New Laptop", date: "PREVIOUS 7 DAYS", timestamp: now - 648000000, createdAt: now - 691200000, lastUpdated: now - 648000000 },
+  { id: "8", title: "Employee Travel Reimbursement", date: "PREVIOUS 7 DAYS", timestamp: now - 720000000, createdAt: now - 777600000, lastUpdated: now - 720000000 },
+  { id: "9", title: "Healthcare Enrollment Follow-up", date: "PREVIOUS 7 DAYS", timestamp: now - 792000000, createdAt: now - 864000000, lastUpdated: now - 792000000 },
+  { id: "10", title: "Quarterly Budget Guidelines", date: "OLDER", timestamp: now - 864000000, createdAt: now - 950400000, lastUpdated: now - 864000000 },
+  { id: "11", title: "New Hire Equipment Checklist", date: "OLDER", timestamp: now - 936000000, createdAt: now - 1036800000, lastUpdated: now - 936000000 },
+  { id: "12", title: "Security Awareness Refresher", date: "OLDER", timestamp: now - 1008000000, createdAt: now - 1123200000, lastUpdated: now - 1008000000 },
 ]
 
 const initialMessagesByConversation: Record<string, ConversationMessage[]> = {
@@ -580,6 +581,7 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
       id: now.toString(),
       title: "New Conversation",
       date: "TODAY", // This will be calculated dynamically in grouping
+      timestamp: now,
       createdAt: now,
       lastUpdated: now,
       archived: false,

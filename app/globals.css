@@ -126,6 +126,71 @@
   }
 }
 
+.markdown-content {
+  display: grid;
+  gap: 0.75rem;
+  color: inherit;
+}
+
+.markdown-content > * {
+  margin: 0;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  font-weight: 600;
+  color: inherit;
+}
+
+.markdown-content h1 {
+  font-size: 1.5rem;
+  line-height: 1.4;
+}
+
+.markdown-content h2 {
+  font-size: 1.25rem;
+  line-height: 1.5;
+}
+
+.markdown-content h3 {
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+.markdown-content p {
+  color: inherit;
+  line-height: 1.7;
+}
+
+.markdown-content ul {
+  padding-left: 1.25rem;
+  list-style: disc;
+  color: inherit;
+}
+
+.markdown-content ol {
+  padding-left: 1.25rem;
+  list-style: decimal;
+  color: inherit;
+}
+
+.markdown-content code {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent-foreground);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  font-size: 0.875em;
+}
+
+.markdown-content pre {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: inherit;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
 /* Beaird Harris Animated Gradient Text */
 @keyframes gradient-flow {
   0% {

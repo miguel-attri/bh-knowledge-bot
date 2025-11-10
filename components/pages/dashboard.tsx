@@ -3,6 +3,8 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { Search, Settings, LogOut, MessageCircle, ChevronDown, Plus, Mic, Send } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -278,6 +280,51 @@ const initialMessagesByConversation: Record<string, ConversationMessage[]> = {
 const STATIC_BOT_REPLY =
   "Thanks for reaching out! This is a placeholder response from the Knowledge Bot while we wire up the real service."
 
+const markdownComponents = {
+  a: ({ node, href, children, ...props }: any) => {
+    const isAnchorLink = href?.startsWith("#")
+    return (
+      <a
+        href={href}
+        target={isAnchorLink ? undefined : "_blank"}
+        rel={isAnchorLink ? undefined : "noreferrer"}
+        className="font-medium text-primary underline underline-offset-4 transition hover:text-primary/80"
+        {...props}
+      >
+        {children}
+      </a>
+    )
+  },
+  code: ({ inline, className, children, ...props }: any) => {
+    if (inline) {
+      return (
+        <code
+          className="rounded-md bg-accent/30 px-1.5 py-0.5 font-mono text-[0.925em] text-accent-foreground"
+          {...props}
+        >
+          {children}
+        </code>
+      )
+    }
+
+    return (
+      <pre className="rounded-xl bg-accent/20 p-4 text-sm leading-6 text-foreground shadow-inner" {...props}>
+        <code className={className}>{children}</code>
+      </pre>
+    )
+  },
+  li: ({ children, ...props }: any) => (
+    <li className="leading-relaxed" {...props}>
+      {children}
+    </li>
+  ),
+  p: ({ children, ...props }: any) => (
+    <p className="leading-relaxed" {...props}>
+      {children}
+    </p>
+  ),
+}
+
 export function Dashboard({ onLogout }: DashboardProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [conversationsList, setConversationsList] = useState<Conversation[]>(initialConversations)
@@ -294,6 +341,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const accountMenuRef = useRef<HTMLDivElement | null>(null)
   const replyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
   const syncTextareaHeight = useCallback((element: HTMLTextAreaElement | null) => {
     if (!element) {
@@ -346,11 +394,11 @@ export function Dashboard({ onLogout }: DashboardProps) {
   )
 
   const groupedConversations = filteredConversations.reduce((acc, conv) => {
-      if (!acc[conv.date]) {
-        acc[conv.date] = []
-      }
-      acc[conv.date].push(conv)
-      return acc
+    if (!acc[conv.date]) {
+      acc[conv.date] = []
+    }
+    acc[conv.date].push(conv)
+    return acc
   }, {} as Record<string, Conversation[]>)
 
   const dateOrder = ["TODAY", "YESTERDAY", "PREVIOUS 7 DAYS"]
@@ -364,6 +412,13 @@ export function Dashboard({ onLogout }: DashboardProps) {
     : []
 
   const hasMessages = activeMessages.length > 0 || isBotTyping
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [activeMessages, isBotTyping])
 
   const resetBotTyping = () => {
     if (replyTimeoutRef.current) {
@@ -419,6 +474,9 @@ export function Dashboard({ onLogout }: DashboardProps) {
     })
 
     setMessageInput("")
+    setTimeout(() => {
+      syncTextareaHeight(textareaRef.current)
+    }, 0)
     setIsBotTyping(true)
 
     if (replyTimeoutRef.current) {
@@ -651,44 +709,60 @@ export function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-hidden">
-          <div className="flex h-full flex-col">
+        <main className="flex-1 overflow-y-auto">
+          <div className="flex min-h-full flex-col">
             <div className="flex-1 px-8 py-10">
-              <div className="mx-auto flex h-full w-full max-w-4xl flex-col gap-8">
+              <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col gap-8">
                 <div
                   className={`relative flex-1 ${
-                    hasMessages ? "overflow-y-auto" : "flex items-center justify-center"
+                    hasMessages ? "" : "flex items-center justify-center"
                   } min-h-[320px]`}
                 >
                   {activeConversation ? (
                     hasMessages ? (
-                      <div className="mx-auto w-full max-w-3xl space-y-4 px-1 pb-12">
-                        {activeMessages.map((message) => (
-                          <div
-                            key={message.id}
-                            className={`flex ${
-                              message.sender === "user" ? "justify-end" : "justify-start"
-                            }`}
-                          >
-                            <div
-                              className={`max-w-[70ch] whitespace-pre-wrap break-words rounded-3xl px-4 py-3 text-sm leading-6 shadow-sm ${
-                                message.sender === "user"
-                                  ? "bg-primary text-primary-foreground rounded-br-lg"
-                                  : "bg-muted text-foreground"
-                              }`}
-                            >
-                              {message.text}
-        </div>
-      </div>
-                        ))}
+                      <div className="mx-auto w-full max-w-3xl space-y-5 px-1 pb-12">
+                        {activeMessages.map((message) => {
+                          const isUser = message.sender === "user"
+
+                          if (isUser) {
+                            return (
+                              <div key={message.id} className="flex justify-end">
+                                <div className="max-w-[70ch] rounded-3xl bg-primary px-4 py-3 text-sm leading-6 text-primary-foreground shadow-sm">
+                                  <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={markdownComponents}
+                                    className="markdown-content"
+                                  >
+                                    {message.text}
+                                  </ReactMarkdown>
+                                </div>
+                              </div>
+                            )
+                          }
+
+                          return (
+                            <div key={message.id} className="flex justify-start">
+                              <div className="w-full max-w-3xl px-6 py-5 text-base leading-relaxed text-foreground">
+                                <ReactMarkdown
+                                  remarkPlugins={[remarkGfm]}
+                                  components={markdownComponents}
+                                  className="markdown-content"
+                                >
+                                  {message.text}
+                                </ReactMarkdown>
+                              </div>
+                            </div>
+                          )
+                        })}
 
                         {isBotTyping ? (
                           <div className="flex justify-start">
-                            <div className="max-w-[70ch] rounded-3xl bg-muted px-4 py-3 text-sm text-muted-foreground shadow-sm">
-                              Knowledge Bot is thinking...
+                            <div className="w-full max-w-3xl px-6 py-3 text-sm text-muted-foreground">
+                              Knowledge Bot is drafting a response&hellip;
                             </div>
                           </div>
                         ) : null}
+                        <div ref={messagesEndRef} />
                       </div>
                     ) : (
                       <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-4 px-8 text-center">

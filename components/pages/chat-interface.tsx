@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { ChatArea } from "@/components/chat-area"
+import { type Project, type ProjectFile } from "@/components/project-folder"
 
 interface ChatInterfaceProps {
   selectedConversationId: string | null
@@ -57,6 +58,7 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
     },
   ])
 
+  const [projects, setProjects] = useState<Project[]>([])
   const [currentConversationId, setCurrentConversationId] = useState<string>(selectedConversationId || "new")
   const [messages, setMessages] = useState<Message[]>([])
 
@@ -138,14 +140,105 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
     "What are the healthcare enrollment deadlines?",
   ]
 
+  // Project management handlers
+  const handleCreateProject = (name: string) => {
+    const newProject: Project = {
+      id: `project-${Date.now()}`,
+      name,
+      createdAt: Date.now(),
+      lastUpdated: Date.now(),
+      conversationIds: [],
+      files: [],
+    }
+    setProjects((prev) => [...prev, newProject])
+  }
+
+  const handleAddConversationToProject = (projectId: string, conversationId: string) => {
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === projectId && !project.conversationIds.includes(conversationId)) {
+          return {
+            ...project,
+            conversationIds: [...project.conversationIds, conversationId],
+            lastUpdated: Date.now(),
+          }
+        }
+        return project
+      }),
+    )
+  }
+
+  const handleRemoveConversationFromProject = (projectId: string, conversationId: string) => {
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === projectId) {
+          return {
+            ...project,
+            conversationIds: project.conversationIds.filter((id) => id !== conversationId),
+            lastUpdated: Date.now(),
+          }
+        }
+        return project
+      }),
+    )
+  }
+
+  const handleDeleteProject = (projectId: string) => {
+    setProjects((prev) => prev.filter((project) => project.id !== projectId))
+  }
+
+  const handleAddFileToProject = (projectId: string, file: File) => {
+    const newFile: ProjectFile = {
+      id: `file-${Date.now()}`,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      uploadedAt: Date.now(),
+    }
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === projectId) {
+          return {
+            ...project,
+            files: [...project.files, newFile],
+            lastUpdated: Date.now(),
+          }
+        }
+        return project
+      }),
+    )
+  }
+
+  const handleRemoveFileFromProject = (projectId: string, fileId: string) => {
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === projectId) {
+          return {
+            ...project,
+            files: project.files.filter((file) => file.id !== fileId),
+            lastUpdated: Date.now(),
+          }
+        }
+        return project
+      }),
+    )
+  }
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar
         conversations={conversations}
+        projects={projects}
         currentConversationId={currentConversationId}
         onNewChat={handleNewChat}
         onSelectConversation={handleSelectConversation}
         onLogout={onLogout}
+        onCreateProject={handleCreateProject}
+        onAddConversationToProject={handleAddConversationToProject}
+        onRemoveConversationFromProject={handleRemoveConversationFromProject}
+        onDeleteProject={handleDeleteProject}
+        onAddFileToProject={handleAddFileToProject}
+        onRemoveFileFromProject={handleRemoveFileFromProject}
       />
       <ChatArea messages={messages} onSendMessage={handleSendMessage} suggestedQuestions={suggestedQuestions} />
     </div>

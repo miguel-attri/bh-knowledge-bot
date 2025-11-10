@@ -10,6 +10,10 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ChatHoverCard } from "@/components/chat-hover-card"
 import { SuggestedQuestions } from "@/components/suggested-questions"
+import { ProjectFolder, type Project, type ProjectFile } from "@/components/project-folder"
+import { CreateProjectDialog } from "@/components/create-project-dialog"
+import { ConversationMenu } from "@/components/conversation-menu"
+import { FolderPlus } from "lucide-react"
 
 interface DashboardProps {
   onLogout: () => void
@@ -342,6 +346,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const [messageInput, setMessageInput] = useState("")
   const [isBotTyping, setIsBotTyping] = useState(false)
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [showCreateProjectDialog, setShowCreateProjectDialog] = useState(false)
 
   // Suggested follow-up questions - can be customized per conversation
   const suggestedQuestions = [
@@ -358,6 +364,95 @@ export function Dashboard({ onLogout }: DashboardProps) {
       syncTextareaHeight(textareaRef.current)
     }, 0)
   }
+
+  // Project management handlers
+  const handleCreateProject = (name: string) => {
+    const newProject: Project = {
+      id: `project-${Date.now()}`,
+      name,
+      createdAt: Date.now(),
+      lastUpdated: Date.now(),
+      conversationIds: [],
+      files: [],
+    }
+    setProjects((prev) => [...prev, newProject])
+    setShowCreateProjectDialog(false)
+  }
+
+  const handleAddConversationToProject = (projectId: string, conversationId: string) => {
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === projectId && !project.conversationIds.includes(conversationId)) {
+          return {
+            ...project,
+            conversationIds: [...project.conversationIds, conversationId],
+            lastUpdated: Date.now(),
+          }
+        }
+        return project
+      }),
+    )
+  }
+
+  const handleRemoveConversationFromProject = (projectId: string, conversationId: string) => {
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === projectId) {
+          return {
+            ...project,
+            conversationIds: project.conversationIds.filter((id) => id !== conversationId),
+            lastUpdated: Date.now(),
+          }
+        }
+        return project
+      }),
+    )
+  }
+
+  const handleDeleteProject = (projectId: string) => {
+    setProjects((prev) => prev.filter((project) => project.id !== projectId))
+  }
+
+  const handleAddFileToProject = (projectId: string, file: File) => {
+    const newFile: ProjectFile = {
+      id: `file-${Date.now()}`,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      uploadedAt: Date.now(),
+    }
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === projectId) {
+          return {
+            ...project,
+            files: [...project.files, newFile],
+            lastUpdated: Date.now(),
+          }
+        }
+        return project
+      }),
+    )
+  }
+
+  const handleRemoveFileFromProject = (projectId: string, fileId: string) => {
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id === projectId) {
+          return {
+            ...project,
+            files: project.files.filter((file) => file.id !== fileId),
+            lastUpdated: Date.now(),
+          }
+        }
+        return project
+      }),
+    )
+  }
+
+  // Get conversations that are not in any project
+  const projectConversationIds = new Set(projects.flatMap((p) => p.conversationIds))
+  const unorganizedConversations = conversationsList.filter((conv) => !projectConversationIds.has(conv.id))
 
   const accountMenuRef = useRef<HTMLDivElement | null>(null)
   const replyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -641,13 +736,23 @@ export function Dashboard({ onLogout }: DashboardProps) {
           </div>
 
         <div className="px-4 pt-4">
-          <Button
-            onClick={handleAddSession}
-            className="w-full justify-center gap-2 rounded-full bg-primary text-primary-foreground shadow-sm transition hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" />
-            New session
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleAddSession}
+              className="flex-1 justify-center gap-2 rounded-full bg-primary text-primary-foreground shadow-sm transition hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              New session
+            </Button>
+            <Button
+              onClick={() => setShowCreateProjectDialog(true)}
+              variant="outline"
+              className="px-4 border-border hover:bg-muted"
+              title="Create Project"
+            >
+              <FolderPlus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Search */}
@@ -667,14 +772,44 @@ export function Dashboard({ onLogout }: DashboardProps) {
         {/* Conversations List */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 space-y-4">
-            {dateOrder.map((date) =>
-              groupedConversations[date] ? (
+            {/* Projects */}
+            {projects.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+                  Projects
+                </h3>
+                <div className="space-y-1">
+                  {projects.map((project) => (
+                    <ProjectFolder
+                      key={project.id}
+                      project={project}
+                      conversations={conversationsList}
+                      currentConversationId={activeConversationId || ""}
+                      onSelectConversation={handleSelectConversation}
+                      onRemoveConversation={handleRemoveConversationFromProject}
+                      onDeleteProject={handleDeleteProject}
+                      onAddFile={handleAddFileToProject}
+                      onRemoveFile={handleRemoveFileFromProject}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Unorganized Conversations by Date */}
+            {dateOrder.map((date) => {
+              const dateConversations = groupedConversations[date]?.filter(
+                (conv) => !projectConversationIds.has(conv.id),
+              )
+              if (!dateConversations || dateConversations.length === 0) return null
+
+              return (
                 <div key={date}>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
                     {date}
                   </h3>
                   <div className="space-y-1">
-                    {groupedConversations[date].map((conv) => {
+                    {dateConversations.map((conv) => {
                       const isActive = conv.id === activeConversationId
                       return (
                         <ChatHoverCard
@@ -684,26 +819,35 @@ export function Dashboard({ onLogout }: DashboardProps) {
                             lastUpdated: conv.lastUpdated,
                           }}
                         >
-                          <button
-                            type="button"
-                            onClick={() => handleSelectConversation(conv.id)}
-                            className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
-                              isActive ? "bg-muted" : "hover:bg-muted"
-                            }`}
-                          >
-                            <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                            <span className="text-sm text-foreground truncate">{conv.title}</span>
-                          </button>
+                          <div className="flex items-center group">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectConversation(conv.id)}
+                              className={`flex-1 flex items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
+                                isActive ? "bg-muted" : "hover:bg-muted"
+                              }`}
+                            >
+                              <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <span className="text-sm text-foreground truncate">{conv.title}</span>
+                            </button>
+                            {projects.length > 0 && (
+                              <ConversationMenu
+                                conversationId={conv.id}
+                                projects={projects}
+                                onAddToProject={handleAddConversationToProject}
+                              />
+                            )}
+                          </div>
                         </ChatHoverCard>
                       )
                     })}
                   </div>
                 </div>
-              ) : null,
-            )}
-          </div>
+              )
+            })}
           </div>
         </div>
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
@@ -844,6 +988,13 @@ export function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </main>
       </div>
+
+      {/* Create Project Dialog */}
+      <CreateProjectDialog
+        isOpen={showCreateProjectDialog}
+        onClose={() => setShowCreateProjectDialog(false)}
+        onCreate={handleCreateProject}
+      />
     </div>
   )
 }

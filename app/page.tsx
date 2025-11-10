@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react"
 import { Login } from "@/components/pages/login"
 import { Dashboard } from "@/components/pages/dashboard"
+import { Stats } from "@/components/pages/stats"
 
-type AppPage = "login" | "dashboard"
+type AppPage = "login" | "dashboard" | "stats"
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState<AppPage>("login")
@@ -37,5 +38,9 @@ export default function Home() {
     return <Login onLogin={handleLogin} />
   }
 
-  return <Dashboard onLogout={handleLogout} />
+  if (currentPage === "stats") {
+    return <Stats onBack={() => setCurrentPage("dashboard")} onLogout={handleLogout} />
+  }
+
+  return <Dashboard onLogout={handleLogout} onNavigateToStats={() => setCurrentPage("stats")} />
 }

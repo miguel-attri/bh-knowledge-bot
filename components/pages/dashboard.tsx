@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import { Search, Settings, LogOut, MessageCircle, ChevronDown, Plus, Mic, Send } from "lucide-react"
+import { Search, Settings, LogOut, MessageCircle, ChevronDown, Plus, Mic, Send, BarChart3 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,7 @@ import { FolderPlus } from "lucide-react"
 
 interface DashboardProps {
   onLogout: () => void
+  onNavigateToStats?: () => void
 }
 
 interface Conversation {
@@ -334,7 +335,7 @@ const markdownComponents = {
   ),
 }
 
-export function Dashboard({ onLogout }: DashboardProps) {
+export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [conversationsList, setConversationsList] = useState<Conversation[]>(initialConversations)
   const [activeConversationId, setActiveConversationId] = useState<string | null>(
@@ -871,23 +872,37 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
             {isAccountMenuOpen ? (
               <div className="absolute right-0 z-10 mt-3 w-48 rounded-lg border border-border bg-popover p-1 shadow-lg">
+                {onNavigateToStats && (
+                  <Button
+                    onClick={() => {
+                      onNavigateToStats()
+                      setIsAccountMenuOpen(false)
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-foreground hover:bg-muted"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Analytics & Stats
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start text-foreground hover:bg-muted"
                 >
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
-          </Button>
-          <Button
-            onClick={onLogout}
-            variant="ghost"
-            size="sm"
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </Button>
+                <Button
+                  onClick={onLogout}
+                  variant="ghost"
+                  size="sm"
                   className="w-full justify-start text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
               </div>
             ) : null}
           </div>

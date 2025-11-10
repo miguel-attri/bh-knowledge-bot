@@ -1,6 +1,6 @@
 "use client"
 
-import { FormEvent, useEffect, useRef, useState } from "react"
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { Search, Settings, LogOut, MessageCircle, ChevronDown, Plus, Mic, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -293,6 +293,19 @@ export function Dashboard({ onLogout }: DashboardProps) {
 
   const accountMenuRef = useRef<HTMLDivElement | null>(null)
   const replyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+
+  const syncTextareaHeight = useCallback((element: HTMLTextAreaElement | null) => {
+    if (!element) {
+      return
+    }
+
+    const maxHeight = 96 // 6rem (approx. 4 lines)
+    element.style.height = "auto"
+    const nextHeight = Math.min(element.scrollHeight, maxHeight)
+    element.style.height = `${nextHeight}px`
+    element.style.overflowY = element.scrollHeight > maxHeight ? "auto" : "hidden"
+  }, [])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -323,6 +336,10 @@ export function Dashboard({ onLogout }: DashboardProps) {
       }
     }
   }, [])
+
+  useEffect(() => {
+    syncTextareaHeight(textareaRef.current)
+  }, [messageInput, activeConversationId, syncTextareaHeight])
 
   const filteredConversations = conversationsList.filter((conversation) =>
     conversation.title.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -430,8 +447,21 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const renderComposer = (variant: "floating" | "docked") => {
     const baseClasses =
       variant === "floating"
-        ? "mx-auto mt-6 flex w-full max-w-2xl items-center gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-sm backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
-        : "mx-auto flex w-full max-w-3xl items-center gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-none backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+        ? "mx-auto mt-6 flex w-full max-w-2xl items-end gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-sm backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+        : "mx-auto flex w-full max-w-3xl items-end gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-none backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+
+    const textareaId = variant === "floating" ? "composer-input-floating" : "composer-input-docked"
+    const isEmpty = messageInput.trim().length === 0
+    const labelText = isEmpty
+      ? activeConversation
+        ? "Ask Anything"
+        : "Create a session to start chatting"
+      : ""
+    const labelTone = isEmpty
+      ? activeConversation
+        ? "text-muted-foreground"
+        : "text-muted-foreground/60"
+      : "text-muted-foreground"
 
     return (
       <form onSubmit={handleSendMessage} className={baseClasses}>
@@ -444,11 +474,24 @@ export function Dashboard({ onLogout }: DashboardProps) {
           <Plus className="h-5 w-5" />
         </button>
 
-        <div className="flex-1 flex items-center">
+        <div className="flex flex-1 flex-col gap-1">
+          {labelText ? (
+            <label htmlFor={textareaId} className={`text-xs font-semibold tracking-wide ${labelTone}`}>
+              {labelText}
+            </label>
+          ) : null}
           <textarea
+            ref={(node) => {
+              textareaRef.current = node
+              syncTextareaHeight(node)
+            }}
+            id={textareaId}
             rows={1}
             value={messageInput}
-            onChange={(event) => setMessageInput(event.target.value)}
+            onChange={(event) => {
+              setMessageInput(event.target.value)
+              syncTextareaHeight(event.currentTarget)
+            }}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault()
@@ -457,21 +500,14 @@ export function Dashboard({ onLogout }: DashboardProps) {
                 }
               }
             }}
-            placeholder={
-              activeConversation ? "Ask anything" : "Create a session to start chatting"
-            }
+            placeholder=""
             disabled={!activeConversation}
-            className="w-full resize-none bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-            style={{ 
-              minHeight: '48px',
-              lineHeight: '48px',
-              paddingTop: '0',
-              paddingBottom: '0'
-            }}
+            className="w-full resize-none overflow-y-hidden bg-transparent text-base text-foreground leading-relaxed placeholder:text-muted-foreground focus:outline-none max-h-24"
+            style={{ minHeight: "2.5rem" }}
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-end gap-2">
           <button
             type="button"
             className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted disabled:opacity-50"

@@ -4,11 +4,14 @@ import { Search, Plus, LogOut, Settings, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ChatHoverCard } from "@/components/chat-hover-card"
 
 interface Conversation {
   id: string
   title: string
   timestamp: number
+  createdAt: number
+  lastUpdated: number
 }
 
 interface SidebarProps {
@@ -63,16 +66,23 @@ export function Sidebar({
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-2">
           {conversations.map((conversation) => (
-            <button
+            <ChatHoverCard
               key={conversation.id}
-              onClick={() => onSelectConversation(conversation.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
-                currentConversationId === conversation.id ? "bg-muted" : "hover:bg-muted"
-              }`}
+              metadata={{
+                createdAt: conversation.createdAt,
+                lastUpdated: conversation.lastUpdated,
+              }}
             >
-              <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-sm font-medium text-foreground truncate">{conversation.title}</span>
-            </button>
+              <button
+                onClick={() => onSelectConversation(conversation.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
+                  currentConversationId === conversation.id ? "bg-muted" : "hover:bg-muted"
+                }`}
+              >
+                <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-sm font-medium text-foreground truncate">{conversation.title}</span>
+              </button>
+            </ChatHoverCard>
           ))}
         </div>
       </div>

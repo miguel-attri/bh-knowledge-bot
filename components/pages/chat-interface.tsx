@@ -21,14 +21,40 @@ interface Conversation {
   id: string
   title: string
   timestamp: number
+  createdAt: number
+  lastUpdated: number
 }
 
 export function ChatInterface({ selectedConversationId, onBack, onLogout }: ChatInterfaceProps) {
   const [conversations, setConversations] = useState<Conversation[]>([
-    { id: "1", title: "PTO Policy Inquiry", timestamp: Date.now() - 86400000 },
-    { id: "2", title: "Expense Report Guide", timestamp: Date.now() - 172800000 },
-    { id: "3", title: "Template for Client Onboarding", timestamp: Date.now() - 259200000 },
-    { id: "4", title: "2024 Tax Checklist", timestamp: Date.now() - 345600000 },
+    {
+      id: "1",
+      title: "PTO Policy Inquiry",
+      timestamp: Date.now() - 86400000,
+      createdAt: Date.now() - 86400000,
+      lastUpdated: Date.now() - 3600000,
+    },
+    {
+      id: "2",
+      title: "Expense Report Guide",
+      timestamp: Date.now() - 172800000,
+      createdAt: Date.now() - 172800000,
+      lastUpdated: Date.now() - 7200000,
+    },
+    {
+      id: "3",
+      title: "Template for Client Onboarding",
+      timestamp: Date.now() - 259200000,
+      createdAt: Date.now() - 259200000,
+      lastUpdated: Date.now() - 10800000,
+    },
+    {
+      id: "4",
+      title: "2024 Tax Checklist",
+      timestamp: Date.now() - 345600000,
+      createdAt: Date.now() - 345600000,
+      lastUpdated: Date.now() - 14400000,
+    },
   ])
 
   const [currentConversationId, setCurrentConversationId] = useState<string>(selectedConversationId || "new")

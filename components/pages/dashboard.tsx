@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ChatHoverCard } from "@/components/chat-hover-card"
 
 interface DashboardProps {
   onLogout: () => void
@@ -17,6 +18,8 @@ interface Conversation {
   id: string
   title: string
   date: string
+  createdAt: number
+  lastUpdated: number
 }
 
 interface ConversationMessage {
@@ -25,19 +28,20 @@ interface ConversationMessage {
   text: string
 }
 
+const now = Date.now()
 const initialConversations: Conversation[] = [
-  { id: "1", title: "PTO Policy Inquiry", date: "TODAY" },
-  { id: "2", title: "Template for Client Onboarding", date: "TODAY" },
-  { id: "3", title: "Expense Reporting Guidelines", date: "YESTERDAY" },
-  { id: "4", title: "401(k) Contribution Limits", date: "YESTERDAY" },
-  { id: "5", title: "Continuing Education Policy", date: "PREVIOUS 7 DAYS" },
-  { id: "6", title: "Marketing Material Request", date: "PREVIOUS 7 DAYS" },
-  { id: "7", title: "IT Support for New Laptop", date: "PREVIOUS 7 DAYS" },
-  { id: "8", title: "Employee Travel Reimbursement", date: "PREVIOUS 7 DAYS" },
-  { id: "9", title: "Healthcare Enrollment Follow-up", date: "PREVIOUS 7 DAYS" },
-  { id: "10", title: "Quarterly Budget Guidelines", date: "PREVIOUS 7 DAYS" },
-  { id: "11", title: "New Hire Equipment Checklist", date: "PREVIOUS 7 DAYS" },
-  { id: "12", title: "Security Awareness Refresher", date: "PREVIOUS 7 DAYS" },
+  { id: "1", title: "PTO Policy Inquiry", date: "TODAY", createdAt: now - 3600000, lastUpdated: now - 1800000 },
+  { id: "2", title: "Template for Client Onboarding", date: "TODAY", createdAt: now - 7200000, lastUpdated: now - 3600000 },
+  { id: "3", title: "Expense Reporting Guidelines", date: "YESTERDAY", createdAt: now - 172800000, lastUpdated: now - 169200000 },
+  { id: "4", title: "401(k) Contribution Limits", date: "YESTERDAY", createdAt: now - 172800000, lastUpdated: now - 165600000 },
+  { id: "5", title: "Continuing Education Policy", date: "PREVIOUS 7 DAYS", createdAt: now - 518400000, lastUpdated: now - 504000000 },
+  { id: "6", title: "Marketing Material Request", date: "PREVIOUS 7 DAYS", createdAt: now - 604800000, lastUpdated: now - 576000000 },
+  { id: "7", title: "IT Support for New Laptop", date: "PREVIOUS 7 DAYS", createdAt: now - 691200000, lastUpdated: now - 648000000 },
+  { id: "8", title: "Employee Travel Reimbursement", date: "PREVIOUS 7 DAYS", createdAt: now - 777600000, lastUpdated: now - 720000000 },
+  { id: "9", title: "Healthcare Enrollment Follow-up", date: "PREVIOUS 7 DAYS", createdAt: now - 864000000, lastUpdated: now - 792000000 },
+  { id: "10", title: "Quarterly Budget Guidelines", date: "PREVIOUS 7 DAYS", createdAt: now - 950400000, lastUpdated: now - 864000000 },
+  { id: "11", title: "New Hire Equipment Checklist", date: "PREVIOUS 7 DAYS", createdAt: now - 1036800000, lastUpdated: now - 936000000 },
+  { id: "12", title: "Security Awareness Refresher", date: "PREVIOUS 7 DAYS", createdAt: now - 1123200000, lastUpdated: now - 1008000000 },
 ]
 
 const initialMessagesByConversation: Record<string, ConversationMessage[]> = {
@@ -428,10 +432,13 @@ export function Dashboard({ onLogout }: DashboardProps) {
   }
 
   const handleAddSession = () => {
+    const now = Date.now()
     const newConversation: Conversation = {
-      id: Date.now().toString(),
+      id: now.toString(),
       title: "New Conversation",
       date: "TODAY",
+      createdAt: now,
+      lastUpdated: now,
     }
 
     setConversationsList((prev) => [newConversation, ...prev])
@@ -644,17 +651,24 @@ export function Dashboard({ onLogout }: DashboardProps) {
                     {groupedConversations[date].map((conv) => {
                       const isActive = conv.id === activeConversationId
                       return (
-                      <button
-                        key={conv.id}
-                          type="button"
-                          onClick={() => handleSelectConversation(conv.id)}
-                          className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
-                            isActive ? "bg-muted" : "hover:bg-muted"
-                          }`}
+                        <ChatHoverCard
+                          key={conv.id}
+                          metadata={{
+                            createdAt: conv.createdAt,
+                            lastUpdated: conv.lastUpdated,
+                          }}
                         >
-                          <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm text-foreground truncate">{conv.title}</span>
-                      </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectConversation(conv.id)}
+                            className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
+                              isActive ? "bg-muted" : "hover:bg-muted"
+                            }`}
+                          >
+                            <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            <span className="text-sm text-foreground truncate">{conv.title}</span>
+                          </button>
+                        </ChatHoverCard>
                       )
                     })}
                   </div>

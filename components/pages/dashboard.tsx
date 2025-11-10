@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ChatHoverCard } from "@/components/chat-hover-card"
+import { SuggestedQuestions } from "@/components/suggested-questions"
 
 interface DashboardProps {
   onLogout: () => void
@@ -342,6 +343,22 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const [isBotTyping, setIsBotTyping] = useState(false)
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
 
+  // Suggested follow-up questions - can be customized per conversation
+  const suggestedQuestions = [
+    "What's the PTO policy for this year?",
+    "How do I submit an expense report?",
+    "Where can I find client onboarding templates?",
+    "What are the healthcare enrollment deadlines?",
+  ]
+
+  const handleSelectQuestion = (question: string) => {
+    setMessageInput(question)
+    setTimeout(() => {
+      textareaRef.current?.focus()
+      syncTextareaHeight(textareaRef.current)
+    }, 0)
+  }
+
   const accountMenuRef = useRef<HTMLDivElement | null>(null)
   const replyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -529,7 +546,15 @@ export function Dashboard({ onLogout }: DashboardProps) {
       : "text-muted-foreground"
 
     return (
-      <form onSubmit={handleSendMessage} className={baseClasses}>
+      <div className="w-full">
+        {suggestedQuestions.length > 0 && activeConversation && (
+          <SuggestedQuestions 
+            questions={suggestedQuestions} 
+            onSelectQuestion={handleSelectQuestion}
+            className="mb-4"
+          />
+        )}
+        <form onSubmit={handleSendMessage} className={baseClasses}>
         <button
           type="button"
           className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition hover:bg-primary/15"
@@ -591,6 +616,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
           </button>
         </div>
       </form>
+      </div>
     )
   }
 

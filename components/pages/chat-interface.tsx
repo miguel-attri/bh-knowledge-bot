@@ -130,6 +130,14 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
     }, 500)
   }
 
+  // Suggested follow-up questions - can be customized per conversation
+  const suggestedQuestions = [
+    "What's the PTO policy for this year?",
+    "How do I submit an expense report?",
+    "Where can I find client onboarding templates?",
+    "What are the healthcare enrollment deadlines?",
+  ]
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar
@@ -139,7 +147,7 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
         onSelectConversation={handleSelectConversation}
         onLogout={onLogout}
       />
-      <ChatArea messages={messages} onSendMessage={handleSendMessage} />
+      <ChatArea messages={messages} onSendMessage={handleSendMessage} suggestedQuestions={suggestedQuestions} />
     </div>
   )
 }

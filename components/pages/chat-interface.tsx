@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { ChatArea } from "@/components/chat-area"
 import { type Project, type ProjectFile } from "@/components/project-folder"
+import { RenameConversationDialog } from "@/components/rename-conversation-dialog"
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 
 interface ChatInterfaceProps {
   selectedConversationId: string | null
@@ -24,6 +26,7 @@ interface Conversation {
   timestamp: number
   createdAt: number
   lastUpdated: number
+  archived?: boolean
 }
 
 export function ChatInterface({ selectedConversationId, onBack, onLogout }: ChatInterfaceProps) {
@@ -34,6 +37,7 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
       timestamp: Date.now() - 86400000,
       createdAt: Date.now() - 86400000,
       lastUpdated: Date.now() - 3600000,
+      archived: false,
     },
     {
       id: "2",
@@ -41,6 +45,7 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
       timestamp: Date.now() - 172800000,
       createdAt: Date.now() - 172800000,
       lastUpdated: Date.now() - 7200000,
+      archived: false,
     },
     {
       id: "3",
@@ -48,6 +53,7 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
       timestamp: Date.now() - 259200000,
       createdAt: Date.now() - 259200000,
       lastUpdated: Date.now() - 10800000,
+      archived: false,
     },
     {
       id: "4",
@@ -55,12 +61,17 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
       timestamp: Date.now() - 345600000,
       createdAt: Date.now() - 345600000,
       lastUpdated: Date.now() - 14400000,
+      archived: false,
     },
   ])
 
   const [projects, setProjects] = useState<Project[]>([])
   const [currentConversationId, setCurrentConversationId] = useState<string>(selectedConversationId || "new")
   const [messages, setMessages] = useState<Message[]>([])
+  const [showRenameDialog, setShowRenameDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [selectedConversationIdForAction, setSelectedConversationIdForAction] = useState<string | null>(null)
+  const [showArchived, setShowArchived] = useState(false)
 
   // Load messages based on selected conversation
   useEffect(() => {
@@ -224,6 +235,38 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
     )
   }
 
+  const handleRenameConversation = (conversationId: string, newTitle: string) => {
+    setConversations((prev) =>
+      prev.map((conv) => (conv.id === conversationId ? { ...conv, title: newTitle, lastUpdated: Date.now() } : conv)),
+    )
+    setShowRenameDialog(false)
+    setSelectedConversationIdForAction(null)
+  }
+
+  const handleDeleteConversation = (conversationId: string) => {
+    setConversations((prev) => prev.filter((conv) => conv.id !== conversationId))
+    if (currentConversationId === conversationId) {
+      setCurrentConversationId("new")
+      setMessages([])
+    }
+    setShowDeleteDialog(false)
+    setSelectedConversationIdForAction(null)
+  }
+
+  const handleArchiveConversation = (conversationId: string) => {
+    setConversations((prev) =>
+      prev.map((conv) => (conv.id === conversationId ? { ...conv, archived: true, lastUpdated: Date.now() } : conv)),
+    )
+    if (currentConversationId === conversationId) {
+      setCurrentConversationId("new")
+      setMessages([])
+    }
+  }
+
+  const selectedConversationForAction = selectedConversationIdForAction
+    ? conversations.find((c) => c.id === selectedConversationIdForAction)
+    : null
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar
@@ -239,8 +282,52 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
         onDeleteProject={handleDeleteProject}
         onAddFileToProject={handleAddFileToProject}
         onRemoveFileFromProject={handleRemoveFileFromProject}
+        onRenameConversation={(id) => {
+          setSelectedConversationIdForAction(id)
+          setShowRenameDialog(true)
+        }}
+        onDeleteConversation={(id) => {
+          setSelectedConversationIdForAction(id)
+          setShowDeleteDialog(true)
+        }}
+        onArchiveConversation={handleArchiveConversation}
+        onUnarchiveConversation={(id) => {
+          setConversations((prev) =>
+            prev.map((conv) => (conv.id === id ? { ...conv, archived: false, lastUpdated: Date.now() } : conv)),
+          )
+        }}
+        showArchived={showArchived}
+        onToggleArchived={() => setShowArchived(!showArchived)}
       />
       <ChatArea messages={messages} onSendMessage={handleSendMessage} suggestedQuestions={suggestedQuestions} />
+
+      {/* Rename Conversation Dialog */}
+      {selectedConversationForAction && (
+        <RenameConversationDialog
+          isOpen={showRenameDialog}
+          currentTitle={selectedConversationForAction.title}
+          onClose={() => {
+            setShowRenameDialog(false)
+            setSelectedConversationIdForAction(null)
+          }}
+          onRename={(newTitle) => handleRenameConversation(selectedConversationForAction.id, newTitle)}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {selectedConversationForAction && (
+        <DeleteConfirmationDialog
+          isOpen={showDeleteDialog}
+          conversationTitle={selectedConversationForAction.title}
+          onClose={() => {
+            setShowDeleteDialog(false)
+            setSelectedConversationIdForAction(null)
+          }}
+          onDelete={() => handleDeleteConversation(selectedConversationForAction.id)}
+          onArchive={() => handleArchiveConversation(selectedConversationForAction.id)}
+          showArchiveOption={true}
+        />
+      )}
     </div>
   )
 }

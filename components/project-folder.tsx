@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, File, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ChatHoverCard } from "@/components/chat-hover-card"
+import { ConversationActionsMenu } from "@/components/conversation-actions-menu"
 
 export interface ProjectFile {
   id: string
@@ -28,6 +29,7 @@ interface Conversation {
   timestamp: number
   createdAt: number
   lastUpdated: number
+  archived?: boolean
 }
 
 interface ProjectFolderProps {
@@ -39,6 +41,10 @@ interface ProjectFolderProps {
   onDeleteProject?: (projectId: string) => void
   onAddFile?: (projectId: string, file: File) => void
   onRemoveFile?: (projectId: string, fileId: string) => void
+  onRenameConversation?: (conversationId: string) => void
+  onDeleteConversation?: (conversationId: string) => void
+  onArchiveConversation?: (conversationId: string) => void
+  onUnarchiveConversation?: (conversationId: string) => void
 }
 
 export function ProjectFolder({
@@ -50,6 +56,10 @@ export function ProjectFolder({
   onDeleteProject,
   onAddFile,
   onRemoveFile,
+  onRenameConversation,
+  onDeleteConversation,
+  onArchiveConversation,
+  onUnarchiveConversation,
 }: ProjectFolderProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const [showMenu, setShowMenu] = useState(false)
@@ -154,14 +164,28 @@ export function ProjectFolder({
                 >
                   <span className="text-sm text-foreground truncate">{conversation.title}</span>
                 </button>
-                {onRemoveConversation && (
-                  <button
-                    onClick={() => onRemoveConversation(project.id, conversation.id)}
-                    className="p-1 rounded hover:bg-muted opacity-0 group-hover/item:opacity-100 transition-opacity"
-                  >
-                    <X className="w-3 h-3 text-muted-foreground" />
-                  </button>
-                )}
+                <div className="flex items-center gap-1">
+                  {onRemoveConversation && (
+                    <button
+                      onClick={() => onRemoveConversation(project.id, conversation.id)}
+                      className="p-1 rounded hover:bg-muted opacity-0 group-hover/item:opacity-100 transition-opacity"
+                      title="Remove from project"
+                    >
+                      <X className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  )}
+                  {(onRenameConversation || onDeleteConversation || onArchiveConversation) && (
+                    <ConversationActionsMenu
+                      conversationId={conversation.id}
+                      conversationTitle={conversation.title}
+                      isArchived={conversation.archived}
+                      onRename={() => onRenameConversation?.(conversation.id)}
+                      onDelete={() => onDeleteConversation?.(conversation.id)}
+                      onArchive={() => onArchiveConversation?.(conversation.id)}
+                      onUnarchive={() => onUnarchiveConversation?.(conversation.id)}
+                    />
+                  )}
+                </div>
               </div>
             </ChatHoverCard>
           ))}

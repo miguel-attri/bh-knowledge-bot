@@ -329,11 +329,11 @@ export function Dashboard({ onLogout }: DashboardProps) {
   )
 
   const groupedConversations = filteredConversations.reduce((acc, conv) => {
-    if (!acc[conv.date]) {
-      acc[conv.date] = []
-    }
-    acc[conv.date].push(conv)
-    return acc
+      if (!acc[conv.date]) {
+        acc[conv.date] = []
+      }
+      acc[conv.date].push(conv)
+      return acc
   }, {} as Record<string, Conversation[]>)
 
   const dateOrder = ["TODAY", "YESTERDAY", "PREVIOUS 7 DAYS"]
@@ -430,8 +430,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
   const renderComposer = (variant: "floating" | "docked") => {
     const baseClasses =
       variant === "floating"
-        ? "mx-auto mt-6 flex w-full max-w-2xl items-end gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-sm backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
-        : "mx-auto flex w-full max-w-3xl items-end gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-none backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+        ? "mx-auto mt-6 flex w-full max-w-2xl items-center gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-sm backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+        : "mx-auto flex w-full max-w-3xl items-center gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-none backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
 
     return (
       <form onSubmit={handleSendMessage} className={baseClasses}>
@@ -444,24 +444,32 @@ export function Dashboard({ onLogout }: DashboardProps) {
           <Plus className="h-5 w-5" />
         </button>
 
-        <textarea
-          rows={1}
-          value={messageInput}
-          onChange={(event) => setMessageInput(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault()
-              if (activeConversation) {
-                event.currentTarget.form?.requestSubmit()
+        <div className="flex-1 flex items-center">
+          <textarea
+            rows={1}
+            value={messageInput}
+            onChange={(event) => setMessageInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault()
+                if (activeConversation) {
+                  event.currentTarget.form?.requestSubmit()
+                }
               }
+            }}
+            placeholder={
+              activeConversation ? "Ask anything" : "Create a session to start chatting"
             }
-          }}
-          placeholder={
-            activeConversation ? "Ask anything" : "Create a session to start chatting"
-          }
-          disabled={!activeConversation}
-          className="flex-1 resize-none bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-        />
+            disabled={!activeConversation}
+            className="w-full resize-none bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
+            style={{ 
+              minHeight: '48px',
+              lineHeight: '48px',
+              paddingTop: '0',
+              paddingBottom: '0'
+            }}
+          />
+        </div>
 
         <div className="flex items-center gap-2">
           <button
@@ -503,7 +511,7 @@ export function Dashboard({ onLogout }: DashboardProps) {
               />
             </div>
           </div>
-        </div>
+          </div>
 
         <div className="px-4 pt-4">
           <Button
@@ -542,8 +550,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
                     {groupedConversations[date].map((conv) => {
                       const isActive = conv.id === activeConversationId
                       return (
-                        <button
-                          key={conv.id}
+                      <button
+                        key={conv.id}
                           type="button"
                           onClick={() => handleSelectConversation(conv.id)}
                           className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
@@ -551,8 +559,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
                           }`}
                         >
                           <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                          <span className="text-sm text-foreground truncate">{conv.title}</span>
-                        </button>
+                        <span className="text-sm text-foreground truncate">{conv.title}</span>
+                      </button>
                       )
                     })}
                   </div>
@@ -560,8 +568,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
               ) : null,
             )}
           </div>
+          </div>
         </div>
-      </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
@@ -574,9 +582,9 @@ export function Dashboard({ onLogout }: DashboardProps) {
             >
               <Avatar className="h-8 w-8 bg-muted">
                 <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                  AH
-                </AvatarFallback>
-              </Avatar>
+                AH
+              </AvatarFallback>
+            </Avatar>
               <span className="hidden sm:inline text-sm font-medium text-foreground">Alex Hartman</span>
               <ChevronDown
                 className={`h-4 w-4 text-muted-foreground transition-transform ${isAccountMenuOpen ? "rotate-180" : ""}`}
@@ -590,18 +598,18 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   size="sm"
                   className="w-full justify-start text-foreground hover:bg-muted"
                 >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
-                </Button>
-                <Button
-                  onClick={onLogout}
-                  variant="ghost"
-                  size="sm"
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </Button>
+          <Button
+            onClick={onLogout}
+            variant="ghost"
+            size="sm"
                   className="w-full justify-start text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
               </div>
             ) : null}
           </div>
@@ -634,8 +642,8 @@ export function Dashboard({ onLogout }: DashboardProps) {
                               }`}
                             >
                               {message.text}
-                            </div>
-                          </div>
+        </div>
+      </div>
                         ))}
 
                         {isBotTyping ? (
@@ -668,15 +676,15 @@ export function Dashboard({ onLogout }: DashboardProps) {
                   ) : (
                     <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-4 px-8 text-center">
                       <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
-                        <MessageCircle className="w-12 h-12 text-muted-foreground" />
-                      </div>
+            <MessageCircle className="w-12 h-12 text-muted-foreground" />
+          </div>
                       <div className="space-y-2">
                         <h2 className="text-2xl font-semibold text-foreground">Create a session to get started</h2>
-                        <p className="text-muted-foreground">
+            <p className="text-muted-foreground">
                           Start a new session from the sidebar to begin a conversation.
-                        </p>
-                      </div>
-                    </div>
+            </p>
+          </div>
+        </div>
                   )}
                 </div>
               </div>

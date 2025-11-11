@@ -4,16 +4,13 @@ import { useState } from "react"
 import { FolderPlus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { SuggestedQuestions } from "@/components/suggested-questions"
-
 interface CreateProjectDialogProps {
   isOpen: boolean
   onClose: () => void
   onCreate: (name: string) => void
-  onSelectSuggestion?: (suggestion: string) => void
 }
 
-export function CreateProjectDialog({ isOpen, onClose, onCreate, onSelectSuggestion }: CreateProjectDialogProps) {
+export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProjectDialogProps) {
   const [projectName, setProjectName] = useState("")
 
   if (!isOpen) return null
@@ -28,16 +25,18 @@ export function CreateProjectDialog({ isOpen, onClose, onCreate, onSelectSuggest
   }
 
   const projectSuggestions = [
-    "What are the best investment strategies for beginners?",
-    "How do I analyze stock market trends?",
-    "What should I read to understand portfolio management?",
-    "What are the key principles of value investing?",
+    "Finance",
+    "Healthcare",
+    "Technology",
+    "Marketing",
+    "Operations",
+    "HR",
+    "Legal",
+    "Sales",
   ]
 
   const handleSuggestionClick = (suggestion: string) => {
-    if (onSelectSuggestion) {
-      onSelectSuggestion(suggestion)
-    }
+    setProjectName(suggestion)
   }
 
   return (
@@ -73,15 +72,20 @@ export function CreateProjectDialog({ isOpen, onClose, onCreate, onSelectSuggest
               autoFocus
             />
           </div>
-          {onSelectSuggestion && (
-            <div className="mb-4">
-              <SuggestedQuestions 
-                questions={projectSuggestions} 
-                onSelectQuestion={handleSuggestionClick}
-                className="max-w-none"
-              />
+          <div className="mb-4">
+            <div className="flex flex-wrap gap-2">
+              {projectSuggestions.map((topic, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleSuggestionClick(topic)}
+                  className="px-4 py-2 text-sm text-foreground bg-muted hover:bg-muted/80 border border-border rounded-lg transition-colors text-left hover:border-primary/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                >
+                  {topic}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel

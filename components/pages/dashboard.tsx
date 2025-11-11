@@ -356,6 +356,7 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [pendingSuggestion, setPendingSuggestion] = useState<string | null>(null)
   const [isChatExpanded, setIsChatExpanded] = useState(true)
+  const [expandedDateCategories, setExpandedDateCategories] = useState<Set<string>>(new Set(["TODAY", "YESTERDAY", "PREVIOUS 7 DAYS", "OLDER"]))
 
   // Suggested follow-up questions - can be customized per conversation
   const getSuggestedQuestions = (conversationId: string | null): string[] => {
@@ -943,66 +944,91 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
                     </h3>
                   </button>
                   {isChatExpanded && (
-                    <div className="ml-6 space-y-4">
+                    <div className="ml-6 space-y-2">
                       {dateOrder.map((date) => {
                         const dateConversations = groupedConversations[date]?.filter(
                           (conv) => !projectConversationIds.has(conv.id),
                         )
                         if (!dateConversations || dateConversations.length === 0) return null
 
+                        const isDateExpanded = expandedDateCategories.has(date)
+                        const toggleDateCategory = () => {
+                          setExpandedDateCategories((prev) => {
+                            const newSet = new Set(prev)
+                            if (newSet.has(date)) {
+                              newSet.delete(date)
+                            } else {
+                              newSet.add(date)
+                            }
+                            return newSet
+                          })
+                        }
+
                         return (
-                <div key={date}>
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
-                    {date}
-                  </h3>
-                  <div className="space-y-1">
-                              {dateConversations.map((conv) => {
-                      const isActive = conv.id === activeConversationId
-                      return (
-                                  <ChatHoverCard
-                        key={conv.id}
-                                    metadata={{
-                                      createdAt: conv.createdAt,
-                                      lastUpdated: conv.lastUpdated,
-                                    }}
-                                  >
-                                    <div className="flex items-center group">
-                                      <button
-                          type="button"
-                          onClick={() => handleSelectConversation(conv.id)}
-                                        className={`flex-1 flex items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
-                            isActive ? "bg-muted" : "hover:bg-muted"
-                          }`}
-                        >
-                          <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm text-foreground truncate">{conv.title}</span>
-                      </button>
-                                      <div className="flex items-center gap-1">
-                                        <ConversationActionsMenu
-                                          conversationId={conv.id}
-                                          conversationTitle={conv.title}
-                                          projects={projects}
-                                          onRename={() => {
-                                            setSelectedConversationId(conv.id)
-                                            setShowRenameDialog(true)
-                                          }}
-                                          onDelete={() => {
-                                            setSelectedConversationId(conv.id)
-                                            setShowDeleteDialog(true)
-                                          }}
-                                          onAddToProject={handleAddConversationToProject}
-                                        />
+                          <div key={date}>
+                            <button
+                              onClick={toggleDateCategory}
+                              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg hover:bg-muted transition-colors text-left mb-1"
+                            >
+                              {isDateExpanded ? (
+                                <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                              )}
+                              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                {date}
+                              </h3>
+                            </button>
+                            {isDateExpanded && (
+                              <div className="space-y-1 ml-5">
+                                {dateConversations.map((conv) => {
+                                  const isActive = conv.id === activeConversationId
+                                  return (
+                                    <ChatHoverCard
+                                      key={conv.id}
+                                      metadata={{
+                                        createdAt: conv.createdAt,
+                                        lastUpdated: conv.lastUpdated,
+                                      }}
+                                    >
+                                      <div className="flex items-center group">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSelectConversation(conv.id)}
+                                          className={`flex-1 flex items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
+                                            isActive ? "bg-muted" : "hover:bg-muted"
+                                          }`}
+                                        >
+                                          <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                          <span className="text-sm text-foreground truncate">{conv.title}</span>
+                                        </button>
+                                        <div className="flex items-center gap-1">
+                                          <ConversationActionsMenu
+                                            conversationId={conv.id}
+                                            conversationTitle={conv.title}
+                                            projects={projects}
+                                            onRename={() => {
+                                              setSelectedConversationId(conv.id)
+                                              setShowRenameDialog(true)
+                                            }}
+                                            onDelete={() => {
+                                              setSelectedConversationId(conv.id)
+                                              setShowDeleteDialog(true)
+                                            }}
+                                            onAddToProject={handleAddConversationToProject}
+                                          />
+                                        </div>
                                       </div>
-                                    </div>
-                                  </ChatHoverCard>
-                      )
-                    })}
-                  </div>
-                </div>
+                                    </ChatHoverCard>
+                                  )
+                                })}
+                              </div>
+                            )}
+                          </div>
                         )
                       })}
                     </div>
-            )}
+                  )}
                 </div>
               )
             })()}
@@ -1187,10 +1213,6 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
         isOpen={showCreateProjectDialog}
         onClose={() => setShowCreateProjectDialog(false)}
         onCreate={handleCreateProject}
-        onSelectSuggestion={(suggestion) => {
-          // Store the suggestion to be used after project creation
-          setPendingSuggestion(suggestion)
-        }}
       />
 
       {/* Rename Conversation Dialog */}

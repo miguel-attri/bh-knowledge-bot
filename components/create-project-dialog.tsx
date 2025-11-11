@@ -4,14 +4,16 @@ import { useState } from "react"
 import { FolderPlus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { SuggestedQuestions } from "@/components/suggested-questions"
 
 interface CreateProjectDialogProps {
   isOpen: boolean
   onClose: () => void
   onCreate: (name: string) => void
+  onSelectSuggestion?: (suggestion: string) => void
 }
 
-export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProjectDialogProps) {
+export function CreateProjectDialog({ isOpen, onClose, onCreate, onSelectSuggestion }: CreateProjectDialogProps) {
   const [projectName, setProjectName] = useState("")
 
   if (!isOpen) return null
@@ -22,6 +24,19 @@ export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProject
       onCreate(projectName.trim())
       setProjectName("")
       onClose()
+    }
+  }
+
+  const projectSuggestions = [
+    "What are the best investment strategies for beginners?",
+    "How do I analyze stock market trends?",
+    "What should I read to understand portfolio management?",
+    "What are the key principles of value investing?",
+  ]
+
+  const handleSuggestionClick = (suggestion: string) => {
+    if (onSelectSuggestion) {
+      onSelectSuggestion(suggestion)
     }
   }
 
@@ -58,6 +73,15 @@ export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProject
               autoFocus
             />
           </div>
+          {onSelectSuggestion && (
+            <div className="mb-4">
+              <SuggestedQuestions 
+                questions={projectSuggestions} 
+                onSelectQuestion={handleSuggestionClick}
+                className="max-w-none"
+              />
+            </div>
+          )}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel

@@ -354,14 +354,35 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   const [showRenameDialog, setShowRenameDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const [pendingSuggestion, setPendingSuggestion] = useState<string | null>(null)
 
   // Suggested follow-up questions - can be customized per conversation
-  const suggestedQuestions = [
-    "What's the PTO policy for this year?",
-    "How do I submit an expense report?",
-    "Where can I find client onboarding templates?",
-    "What are the healthcare enrollment deadlines?",
-  ]
+  const getSuggestedQuestions = (conversationId: string | null): string[] => {
+    if (!conversationId) return []
+    
+    // Check if conversation belongs to a project
+    const project = projects.find((p) => p.conversationIds.includes(conversationId))
+    
+    if (project) {
+      // Project-specific suggestions
+      return [
+        `What files are in the ${project.name} project?`,
+        `Add a new file to ${project.name}`,
+        `What conversations are related to ${project.name}?`,
+        `How can I organize ${project.name} better?`,
+      ]
+    }
+    
+    // Default suggestions for non-project conversations
+    return [
+      "What's the PTO policy for this year?",
+      "How do I submit an expense report?",
+      "Where can I find client onboarding templates?",
+      "What are the healthcare enrollment deadlines?",
+    ]
+  }
+
+  const suggestedQuestions = getSuggestedQuestions(activeConversationId)
 
   const handleSelectQuestion = (question: string) => {
     setMessageInput(question)
@@ -373,16 +394,41 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
 
   // Project management handlers
   const handleCreateProject = (name: string) => {
+    const now = Date.now()
+    // Automatically create a new conversation for the project
+    const newConversation: Conversation = {
+      id: `conv-${now}`,
+      title: `${name} - New Conversation`,
+      date: "TODAY",
+      timestamp: now,
+      createdAt: now,
+      lastUpdated: now,
+      archived: false,
+    }
+    
     const newProject: Project = {
-      id: `project-${Date.now()}`,
+      id: `project-${now}`,
       name,
-      createdAt: Date.now(),
-      lastUpdated: Date.now(),
-      conversationIds: [],
+      createdAt: now,
+      lastUpdated: now,
+      conversationIds: [newConversation.id],
       files: [],
     }
+    
+    // Add the conversation to the list and set it as active
+    setConversationsList((prev) => [newConversation, ...prev])
     setProjects((prev) => [...prev, newProject])
+    setActiveConversationId(newConversation.id)
+    setMessagesByConversation((prev) => ({ ...prev, [newConversation.id]: [] }))
     setShowCreateProjectDialog(false)
+    
+    // If there's a pending suggestion, set it as the message input
+    if (pendingSuggestion) {
+      setTimeout(() => {
+        setMessageInput(pendingSuggestion)
+        setPendingSuggestion(null)
+      }, 100)
+    }
   }
 
   const handleAddConversationToProject = (projectId: string, conversationId: string) => {
@@ -706,13 +752,6 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
 
     return (
       <div className="w-full">
-        {suggestedQuestions.length > 0 && activeConversation && (
-          <SuggestedQuestions 
-            questions={suggestedQuestions} 
-            onSelectQuestion={handleSelectQuestion}
-            className="mb-4"
-          />
-        )}
         <form onSubmit={handleSendMessage} className={baseClasses}>
         <button
           type="button"
@@ -1063,6 +1102,13 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
                           </p>
                         </div>
                         {renderComposer("floating")}
+                        {suggestedQuestions.length > 0 && activeConversation && (
+                          <SuggestedQuestions 
+                            questions={suggestedQuestions} 
+                            onSelectQuestion={handleSelectQuestion}
+                            className="mt-6"
+                          />
+                        )}
                       </div>
                     )
                   ) : (
@@ -1082,7 +1128,18 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
               </div>
             </div>
 
-            {hasMessages ? <footer className="px-8 pb-10 pt-6">{renderComposer("docked")}</footer> : null}
+            {hasMessages ? (
+              <footer className="px-8 pb-10 pt-6">
+                {renderComposer("docked")}
+                {suggestedQuestions.length > 0 && activeConversation && (
+                  <SuggestedQuestions 
+                    questions={suggestedQuestions} 
+                    onSelectQuestion={handleSelectQuestion}
+                    className="mt-4"
+                  />
+                )}
+              </footer>
+            ) : null}
           </div>
         </main>
       </div>
@@ -1092,6 +1149,10 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
         isOpen={showCreateProjectDialog}
         onClose={() => setShowCreateProjectDialog(false)}
         onCreate={handleCreateProject}
+        onSelectSuggestion={(suggestion) => {
+          // Store the suggestion to be used after project creation
+          setPendingSuggestion(suggestion)
+        }}
       />
 
       {/* Rename Conversation Dialog */}

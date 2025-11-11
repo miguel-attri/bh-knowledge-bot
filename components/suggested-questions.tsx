@@ -14,7 +14,7 @@ export function SuggestedQuestions({ questions, onSelectQuestion, className = ""
   }
 
   return (
-    <div className={`${className}`}>
+    <div className={`w-full max-w-3xl mx-auto ${className}`}>
       <div className="flex items-center gap-2 mb-3 px-2">
         <Sparkles className="w-4 h-4 text-muted-foreground" />
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Suggested Questions</p>

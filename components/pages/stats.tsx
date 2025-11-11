@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { TrendingUp, MessageSquare, FileText, BarChart3, Filter, Users } from "lucide-react"
+import { TrendingUp, MessageSquare, FileText, BarChart3, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
@@ -195,30 +195,6 @@ export function Stats({ onBack, onLogout }: StatsProps) {
           </div>
         </div>
 
-        {/* User Section */}
-        <div className="border-t border-border p-4">
-          <div className="flex items-center gap-3 px-2">
-            <Avatar className="h-10 w-10 bg-muted">
-              <AvatarFallback className="bg-gradient-to-br from-green-400 to-green-500 text-white font-semibold">
-                AH
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">Alex Hartman</p>
-              <p className="text-xs text-muted-foreground">Beard Harris</p>
-            </div>
-          </div>
-          {onLogout && (
-            <Button
-              onClick={onLogout}
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 mt-2"
-            >
-              Logout
-            </Button>
-          )}
-        </div>
       </div>
 
       {/* Main Content */}
@@ -231,53 +207,37 @@ export function Stats({ onBack, onLogout }: StatsProps) {
                 Track hot topics, frequently asked questions, and documentation gaps
               </p>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="w-4 h-4" />
-              <span>Data is anonymized and aggregated</span>
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 bg-muted">
+                <AvatarFallback className="bg-gradient-to-br from-green-400 to-green-500 text-white font-semibold">
+                  AH
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium text-foreground">Alex Hartman</p>
+                <p className="text-xs text-muted-foreground">Beard Harris</p>
+              </div>
+              {onLogout && (
+                <Button
+                  onClick={onLogout}
+                  variant="ghost"
+                  size="sm"
+                  className="ml-4 text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  Logout
+                </Button>
+              )}
             </div>
           </div>
         </header>
 
         <main className="flex-1 p-8">
           <div className="max-w-7xl mx-auto space-y-8">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-card border border-border rounded-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Questions</p>
-                    <p className="text-3xl font-bold text-foreground mt-2">
-                      {mockQuestions.reduce((sum, q) => sum + q.count, 0)}
-                    </p>
-                  </div>
-                  <MessageSquare className="w-12 h-12 text-primary opacity-20" />
-                </div>
-              </div>
-              <div className="bg-card border border-border rounded-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Hot Topics</p>
-                    <p className="text-3xl font-bold text-foreground mt-2">{mockTopics.length}</p>
-                  </div>
-                  <TrendingUp className="w-12 h-12 text-primary opacity-20" />
-                </div>
-              </div>
-              <div className="bg-card border border-border rounded-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Documentation Gaps</p>
-                    <p className="text-3xl font-bold text-foreground mt-2">{mockDocumentationGaps.length}</p>
-                  </div>
-                  <FileText className="w-12 h-12 text-primary opacity-20" />
-                </div>
-              </div>
-            </div>
-
-            {/* Hot Topics */}
+            {/* Trending Topics */}
             <div className="bg-card border border-border rounded-lg p-6">
               <div className="flex items-center gap-2 mb-6">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-foreground">Hot Topics</h2>
+                <h2 className="text-xl font-semibold text-foreground">Trending Topics</h2>
               </div>
               <div className="space-y-4">
                 {mockTopics.map((topic) => (

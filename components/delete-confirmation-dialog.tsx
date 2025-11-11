@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2, X, Archive } from "lucide-react"
+import { Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface DeleteConfirmationDialogProps {
@@ -8,8 +8,6 @@ interface DeleteConfirmationDialogProps {
   conversationTitle: string
   onClose: () => void
   onDelete: () => void
-  onArchive?: () => void
-  showArchiveOption?: boolean
 }
 
 export function DeleteConfirmationDialog({
@@ -17,8 +15,6 @@ export function DeleteConfirmationDialog({
   conversationTitle,
   onClose,
   onDelete,
-  onArchive,
-  showArchiveOption = true,
 }: DeleteConfirmationDialogProps) {
   if (!isOpen) return null
 
@@ -45,25 +41,6 @@ export function DeleteConfirmationDialog({
             Are you sure you want to delete <span className="font-semibold">"{conversationTitle}"</span>? This action
             cannot be undone.
           </p>
-          {showArchiveOption && onArchive && (
-            <div className="mb-4 p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground mb-2">
-                For auditing purposes, you can archive this conversation instead of deleting it permanently.
-              </p>
-              <Button
-                onClick={() => {
-                  onArchive()
-                  onClose()
-                }}
-                variant="outline"
-                size="sm"
-                className="w-full"
-              >
-                <Archive className="w-4 h-4 mr-2" />
-                Archive Instead
-              </Button>
-            </div>
-          )}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
@@ -85,4 +62,3 @@ export function DeleteConfirmationDialog({
     </div>
   )
 }
-

@@ -8,9 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ChatHoverCard } from "@/components/chat-hover-card"
 import { ProjectFolder, type Project, type ProjectFile } from "@/components/project-folder"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
-import { ConversationMenu } from "@/components/conversation-menu"
 import { ConversationActionsMenu } from "@/components/conversation-actions-menu"
-import { Archive } from "lucide-react"
 
 interface Conversation {
   id: string
@@ -36,10 +34,6 @@ interface SidebarProps {
   onRemoveFileFromProject?: (projectId: string, fileId: string) => void
   onRenameConversation?: (conversationId: string) => void
   onDeleteConversation?: (conversationId: string) => void
-  onArchiveConversation?: (conversationId: string) => void
-  onUnarchiveConversation?: (conversationId: string) => void
-  showArchived?: boolean
-  onToggleArchived?: () => void
 }
 
 export function Sidebar({
@@ -57,10 +51,6 @@ export function Sidebar({
   onRemoveFileFromProject,
   onRenameConversation,
   onDeleteConversation,
-  onArchiveConversation,
-  onUnarchiveConversation,
-  showArchived = false,
-  onToggleArchived,
 }: SidebarProps) {
   const [showCreateProjectDialog, setShowCreateProjectDialog] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -69,14 +59,11 @@ export function Sidebar({
   const projectConversationIds = new Set(projects.flatMap((p) => p.conversationIds))
   const unorganizedConversations = conversations.filter((conv) => !projectConversationIds.has(conv.id))
 
-  // Filter conversations based on search and archive status
+  // Filter conversations based on search
   const filteredUnorganized = unorganizedConversations.filter((conv) => {
     const matchesSearch = conv.title.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesArchiveFilter = showArchived ? conv.archived : !conv.archived
-    return matchesSearch && matchesArchiveFilter
+    return matchesSearch
   })
-
-  const archivedCount = conversations.filter((conv) => conv.archived).length
 
   const handleCreateProject = (name: string) => {
     if (onCreateProject) {
@@ -123,20 +110,6 @@ export function Sidebar({
         </div>
       </div>
 
-      {/* Archive Toggle */}
-      {onToggleArchived && (
-        <div className="px-6 pt-2 pb-4">
-          <Button
-            onClick={onToggleArchived}
-            variant={showArchived ? "default" : "ghost"}
-            size="sm"
-            className="w-full justify-start"
-          >
-            <Archive className="h-4 w-4 mr-2" />
-            {showArchived ? "Show Active" : `Archived (${archivedCount})`}
-          </Button>
-        </div>
-      )}
 
       {/* Search */}
       <div className="p-4 border-b border-border">
@@ -203,27 +176,16 @@ export function Sidebar({
                       >
                         <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         <span className="text-sm font-medium text-foreground truncate">{conversation.title}</span>
-                        {conversation.archived && (
-                          <Archive className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                        )}
                       </button>
                       <div className="flex items-center gap-1">
-                        {onAddConversationToProject && projects.length > 0 && !showArchived && (
-                          <ConversationMenu
-                            conversationId={conversation.id}
-                            projects={projects}
-                            onAddToProject={onAddConversationToProject}
-                          />
-                        )}
-                        {(onRenameConversation || onDeleteConversation || onArchiveConversation) && (
+                        {(onRenameConversation || onDeleteConversation) && (
                           <ConversationActionsMenu
                             conversationId={conversation.id}
                             conversationTitle={conversation.title}
-                            isArchived={conversation.archived}
+                            projects={projects}
                             onRename={() => onRenameConversation?.(conversation.id)}
                             onDelete={() => onDeleteConversation?.(conversation.id)}
-                            onArchive={() => onArchiveConversation?.(conversation.id)}
-                            onUnarchive={() => onUnarchiveConversation?.(conversation.id)}
+                            onAddToProject={onAddConversationToProject}
                           />
                         )}
                       </div>

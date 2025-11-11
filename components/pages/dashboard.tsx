@@ -12,11 +12,10 @@ import { ChatHoverCard } from "@/components/chat-hover-card"
 import { SuggestedQuestions } from "@/components/suggested-questions"
 import { ProjectFolder, type Project, type ProjectFile } from "@/components/project-folder"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
-import { ConversationMenu } from "@/components/conversation-menu"
 import { ConversationActionsMenu } from "@/components/conversation-actions-menu"
 import { RenameConversationDialog } from "@/components/rename-conversation-dialog"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
-import { FolderPlus, Archive } from "lucide-react"
+import { FolderPlus } from "lucide-react"
 
 interface DashboardProps {
   onLogout: () => void
@@ -355,7 +354,6 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   const [showRenameDialog, setShowRenameDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
-  const [showArchived, setShowArchived] = useState(false)
 
   // Suggested follow-up questions - can be customized per conversation
   const suggestedQuestions = [
@@ -533,8 +531,7 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
 
   const filteredConversations = conversationsList.filter((conversation) => {
     const matchesSearch = conversation.title.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesArchiveFilter = showArchived ? conversation.archived : !conversation.archived
-    return matchesSearch && matchesArchiveFilter
+    return matchesSearch
   })
 
   const groupedConversations = filteredConversations.reduce((acc, conv) => {
@@ -549,8 +546,6 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
 
   const dateOrder = ["TODAY", "YESTERDAY", "PREVIOUS 7 DAYS", "OLDER"]
   
-  const archivedConversations = conversationsList.filter((conv) => conv.archived)
-
   const activeConversation = conversationsList.find(
     (conversation) => conversation.id === activeConversationId,
   )
@@ -622,20 +617,6 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
     setSelectedConversationId(null)
   }
 
-  const handleArchiveConversation = (conversationId: string) => {
-    setConversationsList((prev) =>
-      prev.map((conv) => (conv.id === conversationId ? { ...conv, archived: true, lastUpdated: Date.now() } : conv)),
-    )
-    if (activeConversationId === conversationId) {
-      setActiveConversationId(null)
-    }
-  }
-
-  const handleUnarchiveConversation = (conversationId: string) => {
-    setConversationsList((prev) =>
-      prev.map((conv) => (conv.id === conversationId ? { ...conv, archived: false, lastUpdated: Date.now() } : conv)),
-    )
-  }
 
   const selectedConversation = selectedConversationId
     ? conversationsList.find((c) => c.id === selectedConversationId)
@@ -830,18 +811,6 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
           </div>
         </div>
 
-        {/* Archive Toggle */}
-        <div className="px-4 pt-2">
-          <Button
-            onClick={() => setShowArchived(!showArchived)}
-            variant={showArchived ? "default" : "ghost"}
-            size="sm"
-            className="w-full justify-start"
-          >
-            <Archive className="h-4 w-4 mr-2" />
-            {showArchived ? "Show Active" : `Archived (${archivedConversations.length})`}
-          </Button>
-        </div>
 
         {/* Search */}
         <div className="px-4 pb-4 pt-3 border-b border-border">
@@ -886,8 +855,8 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
                         setSelectedConversationId(id)
                         setShowDeleteDialog(true)
                       }}
-                      onArchiveConversation={handleArchiveConversation}
-                      onUnarchiveConversation={handleUnarchiveConversation}
+                      projects={projects}
+                      onAddToProject={handleAddConversationToProject}
                     />
                   ))}
                 </div>
@@ -927,22 +896,12 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
                             >
                               <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                               <span className="text-sm text-foreground truncate">{conv.title}</span>
-                              {conv.archived && (
-                                <Archive className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                              )}
                             </button>
                             <div className="flex items-center gap-1">
-                              {projects.length > 0 && !showArchived && (
-                                <ConversationMenu
-                                  conversationId={conv.id}
-                                  projects={projects}
-                                  onAddToProject={handleAddConversationToProject}
-                                />
-                              )}
                               <ConversationActionsMenu
                                 conversationId={conv.id}
                                 conversationTitle={conv.title}
-                                isArchived={conv.archived}
+                                projects={projects}
                                 onRename={() => {
                                   setSelectedConversationId(conv.id)
                                   setShowRenameDialog(true)
@@ -951,8 +910,7 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
                                   setSelectedConversationId(conv.id)
                                   setShowDeleteDialog(true)
                                 }}
-                                onArchive={() => handleArchiveConversation(conv.id)}
-                                onUnarchive={() => handleUnarchiveConversation(conv.id)}
+                                onAddToProject={handleAddConversationToProject}
                               />
                             </div>
                           </div>
@@ -1151,8 +1109,6 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
             setSelectedConversationId(null)
           }}
           onDelete={() => handleDeleteConversation(selectedConversation.id)}
-          onArchive={() => handleArchiveConversation(selectedConversation.id)}
-          showArchiveOption={true}
         />
       )}
     </div>

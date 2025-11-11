@@ -290,14 +290,6 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
           setSelectedConversationIdForAction(id)
           setShowDeleteDialog(true)
         }}
-        onArchiveConversation={handleArchiveConversation}
-        onUnarchiveConversation={(id) => {
-          setConversations((prev) =>
-            prev.map((conv) => (conv.id === id ? { ...conv, archived: false, lastUpdated: Date.now() } : conv)),
-          )
-        }}
-        showArchived={showArchived}
-        onToggleArchived={() => setShowArchived(!showArchived)}
       />
       <ChatArea messages={messages} onSendMessage={handleSendMessage} suggestedQuestions={suggestedQuestions} />
 
@@ -324,8 +316,6 @@ export function ChatInterface({ selectedConversationId, onBack, onLogout }: Chat
             setSelectedConversationIdForAction(null)
           }}
           onDelete={() => handleDeleteConversation(selectedConversationForAction.id)}
-          onArchive={() => handleArchiveConversation(selectedConversationForAction.id)}
-          showArchiveOption={true}
         />
       )}
     </div>

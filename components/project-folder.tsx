@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, File, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ChatHoverCard } from "@/components/chat-hover-card"
@@ -43,8 +43,8 @@ interface ProjectFolderProps {
   onRemoveFile?: (projectId: string, fileId: string) => void
   onRenameConversation?: (conversationId: string) => void
   onDeleteConversation?: (conversationId: string) => void
-  onArchiveConversation?: (conversationId: string) => void
-  onUnarchiveConversation?: (conversationId: string) => void
+  projects?: Project[]
+  onAddToProject?: (projectId: string, conversationId: string) => void
 }
 
 export function ProjectFolder({
@@ -58,14 +58,32 @@ export function ProjectFolder({
   onRemoveFile,
   onRenameConversation,
   onDeleteConversation,
-  onArchiveConversation,
-  onUnarchiveConversation,
+  projects = [],
+  onAddToProject,
 }: ProjectFolderProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const projectConversations = conversations.filter((conv) => project.conversationIds.includes(conv.id))
 
   const fileInputId = `file-input-${project.id}`
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [showMenu])
   
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -99,7 +117,7 @@ export function ProjectFolder({
             {projectConversations.length} {projectConversations.length === 1 ? "chat" : "chats"}
           </span>
         </button>
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="p-1 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
@@ -174,15 +192,14 @@ export function ProjectFolder({
                       <X className="w-3 h-3 text-muted-foreground" />
                     </button>
                   )}
-                  {(onRenameConversation || onDeleteConversation || onArchiveConversation) && (
+                  {(onRenameConversation || onDeleteConversation) && (
                     <ConversationActionsMenu
                       conversationId={conversation.id}
                       conversationTitle={conversation.title}
-                      isArchived={conversation.archived}
+                      projects={projects}
                       onRename={() => onRenameConversation?.(conversation.id)}
                       onDelete={() => onDeleteConversation?.(conversation.id)}
-                      onArchive={() => onArchiveConversation?.(conversation.id)}
-                      onUnarchive={() => onUnarchiveConversation?.(conversation.id)}
+                      onAddToProject={onAddToProject}
                     />
                   )}
                 </div>

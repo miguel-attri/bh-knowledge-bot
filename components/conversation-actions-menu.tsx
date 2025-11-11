@@ -1,26 +1,25 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { MoreVertical, Edit, Trash2, Archive, ArchiveRestore } from "lucide-react"
+import { MoreVertical, Edit, Trash2, FolderPlus } from "lucide-react"
+import { type Project } from "@/components/project-folder"
 
 interface ConversationActionsMenuProps {
   conversationId: string
   conversationTitle: string
-  isArchived?: boolean
+  projects?: Project[]
   onRename: () => void
   onDelete: () => void
-  onArchive?: () => void
-  onUnarchive?: () => void
+  onAddToProject?: (projectId: string, conversationId: string) => void
 }
 
 export function ConversationActionsMenu({
   conversationId,
   conversationTitle,
-  isArchived = false,
+  projects = [],
   onRename,
   onDelete,
-  onArchive,
-  onUnarchive,
+  onAddToProject,
 }: ConversationActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -41,6 +40,9 @@ export function ConversationActionsMenu({
     }
   }, [isOpen])
 
+  // Get projects that don't already contain this conversation
+  const availableProjects = projects.filter((project) => !project.conversationIds.includes(conversationId))
+
   return (
     <div className="relative" ref={menuRef}>
       <button
@@ -52,6 +54,27 @@ export function ConversationActionsMenu({
       {isOpen && (
         <div className="absolute right-0 mt-1 w-48 rounded-lg border border-border bg-popover shadow-lg z-10">
           <div className="p-1">
+            {availableProjects.length > 0 && onAddToProject && (
+              <>
+                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Add to Project
+                </div>
+                {availableProjects.map((project) => (
+                  <button
+                    key={project.id}
+                    onClick={() => {
+                      onAddToProject(project.id, conversationId)
+                      setIsOpen(false)
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted rounded flex items-center gap-2"
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                    {project.name}
+                  </button>
+                ))}
+                <div className="border-t border-border my-1" />
+              </>
+            )}
             <button
               onClick={() => {
                 onRename()
@@ -62,33 +85,6 @@ export function ConversationActionsMenu({
               <Edit className="w-4 h-4" />
               Rename
             </button>
-            {isArchived ? (
-              onUnarchive && (
-                <button
-                  onClick={() => {
-                    onUnarchive()
-                    setIsOpen(false)
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted rounded flex items-center gap-2"
-                >
-                  <ArchiveRestore className="w-4 h-4" />
-                  Unarchive
-                </button>
-              )
-            ) : (
-              onArchive && (
-                <button
-                  onClick={() => {
-                    onArchive()
-                    setIsOpen(false)
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted rounded flex items-center gap-2"
-                >
-                  <Archive className="w-4 h-4" />
-                  Archive
-                </button>
-              )
-            )}
             <div className="border-t border-border my-1" />
             <button
               onClick={() => {
@@ -106,4 +102,3 @@ export function ConversationActionsMenu({
     </div>
   )
 }
-

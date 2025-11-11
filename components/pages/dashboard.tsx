@@ -563,6 +563,14 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
     }
   }, [activeMessages, isBotTyping])
 
+  // Automatically create a new session on mount if no active conversation
+  useEffect(() => {
+    if (activeConversationId === null) {
+      handleAddSession()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const resetBotTyping = () => {
     if (replyTimeoutRef.current) {
       clearTimeout(replyTimeoutRef.current)

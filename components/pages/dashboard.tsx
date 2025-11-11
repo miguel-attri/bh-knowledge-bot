@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import { Search, Settings, LogOut, MessageCircle, ChevronDown, Plus, Mic, Send, BarChart3 } from "lucide-react"
+import { Search, Settings, LogOut, MessageCircle, ChevronDown, ChevronRight, Plus, Mic, Send, BarChart3, Folder, FolderOpen } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Button } from "@/components/ui/button"
@@ -355,6 +355,7 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [pendingSuggestion, setPendingSuggestion] = useState<string | null>(null)
+  const [isChatExpanded, setIsChatExpanded] = useState(true)
 
   // Suggested follow-up questions - can be customized per conversation
   const getSuggestedQuestions = (conversationId: string | null): string[] => {
@@ -591,7 +592,7 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   }, {} as Record<string, Conversation[]>)
 
   const dateOrder = ["TODAY", "YESTERDAY", "PREVIOUS 7 DAYS", "OLDER"]
-  
+
   const activeConversation = conversationsList.find(
     (conversation) => conversation.id === activeConversationId,
   )
@@ -752,7 +753,7 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
 
     return (
       <div className="w-full">
-        <form onSubmit={handleSendMessage} className={baseClasses}>
+      <form onSubmit={handleSendMessage} className={baseClasses}>
         <button
           type="button"
           className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition hover:bg-primary/15"
@@ -840,13 +841,13 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
 
         <div className="px-4 pt-4">
           <div className="flex gap-2">
-            <Button
-              onClick={handleAddSession}
+          <Button
+            onClick={handleAddSession}
               className="flex-1 justify-center gap-2 rounded-full bg-primary text-primary-foreground shadow-sm transition hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" />
-              New session
-            </Button>
+          >
+            <Plus className="h-4 w-4" />
+            New session
+          </Button>
             <Button
               onClick={() => setShowCreateProjectDialog(true)}
               variant="outline"
@@ -910,67 +911,104 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
               </div>
             )}
 
-            {/* Unorganized Conversations by Date */}
-            {dateOrder.map((date) => {
-              const dateConversations = groupedConversations[date]?.filter(
-                (conv) => !projectConversationIds.has(conv.id),
-              )
-              if (!dateConversations || dateConversations.length === 0) return null
+            {/* Chat Section - Collapsible */}
+            {(() => {
+              const hasUnorganizedConversations = dateOrder.some((date) => {
+                const dateConversations = groupedConversations[date]?.filter(
+                  (conv) => !projectConversationIds.has(conv.id),
+                )
+                return dateConversations && dateConversations.length > 0
+              })
+
+              if (!hasUnorganizedConversations) return null
 
               return (
+                <div>
+                  <button
+                    onClick={() => setIsChatExpanded(!isChatExpanded)}
+                    className="flex items-center gap-2 w-full px-2 py-2 rounded-lg hover:bg-muted transition-colors text-left mb-2"
+                  >
+                    {isChatExpanded ? (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    )}
+                    {isChatExpanded ? (
+                      <FolderOpen className="w-4 h-4 text-primary" />
+                    ) : (
+                      <Folder className="w-4 h-4 text-primary" />
+                    )}
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Chat
+                    </h3>
+                  </button>
+                  {isChatExpanded && (
+                    <div className="ml-6 space-y-4">
+                      {dateOrder.map((date) => {
+                        const dateConversations = groupedConversations[date]?.filter(
+                          (conv) => !projectConversationIds.has(conv.id),
+                        )
+                        if (!dateConversations || dateConversations.length === 0) return null
+
+                        return (
                 <div key={date}>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
                     {date}
                   </h3>
                   <div className="space-y-1">
-                    {dateConversations.map((conv) => {
+                              {dateConversations.map((conv) => {
                       const isActive = conv.id === activeConversationId
                       return (
-                        <ChatHoverCard
-                          key={conv.id}
-                          metadata={{
-                            createdAt: conv.createdAt,
-                            lastUpdated: conv.lastUpdated,
-                          }}
+                                  <ChatHoverCard
+                        key={conv.id}
+                                    metadata={{
+                                      createdAt: conv.createdAt,
+                                      lastUpdated: conv.lastUpdated,
+                                    }}
+                                  >
+                                    <div className="flex items-center group">
+                                      <button
+                          type="button"
+                          onClick={() => handleSelectConversation(conv.id)}
+                                        className={`flex-1 flex items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
+                            isActive ? "bg-muted" : "hover:bg-muted"
+                          }`}
                         >
-                          <div className="flex items-center group">
-                            <button
-                              type="button"
-                              onClick={() => handleSelectConversation(conv.id)}
-                              className={`flex-1 flex items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
-                                isActive ? "bg-muted" : "hover:bg-muted"
-                              }`}
-                            >
-                              <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                              <span className="text-sm text-foreground truncate">{conv.title}</span>
-                            </button>
-                            <div className="flex items-center gap-1">
-                              <ConversationActionsMenu
-                                conversationId={conv.id}
-                                conversationTitle={conv.title}
-                                projects={projects}
-                                onRename={() => {
-                                  setSelectedConversationId(conv.id)
-                                  setShowRenameDialog(true)
-                                }}
-                                onDelete={() => {
-                                  setSelectedConversationId(conv.id)
-                                  setShowDeleteDialog(true)
-                                }}
-                                onAddToProject={handleAddConversationToProject}
-                              />
-                            </div>
-                          </div>
-                        </ChatHoverCard>
+                          <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm text-foreground truncate">{conv.title}</span>
+                      </button>
+                                      <div className="flex items-center gap-1">
+                                        <ConversationActionsMenu
+                                          conversationId={conv.id}
+                                          conversationTitle={conv.title}
+                                          projects={projects}
+                                          onRename={() => {
+                                            setSelectedConversationId(conv.id)
+                                            setShowRenameDialog(true)
+                                          }}
+                                          onDelete={() => {
+                                            setSelectedConversationId(conv.id)
+                                            setShowDeleteDialog(true)
+                                          }}
+                                          onAddToProject={handleAddConversationToProject}
+                                        />
+                                      </div>
+                                    </div>
+                                  </ChatHoverCard>
                       )
                     })}
                   </div>
                 </div>
+                        )
+                      })}
+                    </div>
+            )}
+                </div>
               )
-            })}
+            })()}
+          </div>
           </div>
         </div>
-      </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
@@ -1013,18 +1051,18 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
                   size="sm"
                   className="w-full justify-start text-foreground hover:bg-muted"
                 >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
-                </Button>
-                <Button
-                  onClick={onLogout}
-                  variant="ghost"
-                  size="sm"
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </Button>
+          <Button
+            onClick={onLogout}
+            variant="ghost"
+            size="sm"
                   className="w-full justify-start text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
               </div>
             ) : null}
           </div>

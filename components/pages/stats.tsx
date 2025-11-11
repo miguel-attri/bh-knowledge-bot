@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { TrendingUp, MessageSquare, FileText, BarChart3, Filter } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import Image from "next/image"
+import { TrendingUp, BarChart3, Filter, ChevronDown, ChevronRight, ChevronLeft, LogOut, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
@@ -26,16 +27,6 @@ interface TopicStat {
   change: number
 }
 
-interface DocumentationGap {
-  id: string
-  topic: string
-  questionCount: number
-  urgency: "high" | "medium" | "low"
-  relatedQuestions: string[]
-}
-
-type StaffGrade = "all" | "associate" | "senior" | "manager" | "director"
-
 // Mock data - in production, this would come from an API
 const mockQuestions: QuestionStat[] = [
   { id: "1", question: "How do I submit an expense report?", count: 45, category: "Finance", lastAsked: Date.now() - 3600000 },
@@ -59,64 +50,43 @@ const mockTopics: TopicStat[] = [
   { id: "8", topic: "401(k) Contributions", count: 28, trend: "down", change: -3 },
 ]
 
-const mockDocumentationGaps: DocumentationGap[] = [
-  {
-    id: "1",
-    topic: "Remote Work Equipment",
-    questionCount: 15,
-    urgency: "high",
-    relatedQuestions: [
-      "What equipment is provided for remote workers?",
-      "How do I request a monitor for home office?",
-      "What's the process for returning equipment?",
-    ],
-  },
-  {
-    id: "2",
-    topic: "Client Communication Templates",
-    questionCount: 12,
-    urgency: "medium",
-    relatedQuestions: [
-      "Where are email templates for client updates?",
-      "What's the standard response time for client inquiries?",
-      "How do I customize client communication templates?",
-    ],
-  },
-  {
-    id: "3",
-    topic: "Performance Review Process",
-    questionCount: 9,
-    urgency: "medium",
-    relatedQuestions: [
-      "When are performance reviews conducted?",
-      "What documents are needed for performance reviews?",
-      "How do I access my performance review history?",
-    ],
-  },
-  {
-    id: "4",
-    topic: "Software License Management",
-    questionCount: 7,
-    urgency: "low",
-    relatedQuestions: [
-      "How do I request a new software license?",
-      "What software is available for employees?",
-      "Who manages software license renewals?",
-    ],
-  },
-]
-
 export function Stats({ onBack, onLogout }: StatsProps) {
-  const [selectedGrade, setSelectedGrade] = useState<StaffGrade>("all")
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "all">("30d")
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
+  const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set())
+  const accountMenuRef = useRef<HTMLDivElement | null>(null)
 
-  const staffGrades: { value: StaffGrade; label: string }[] = [
-    { value: "all", label: "All Staff" },
-    { value: "associate", label: "Associate" },
-    { value: "senior", label: "Senior" },
-    { value: "manager", label: "Manager" },
-    { value: "director", label: "Director" },
-  ]
+  // Close account menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsAccountMenuOpen(false)
+      }
+    }
+
+    if (isAccountMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isAccountMenuOpen])
+
+  const toggleTopic = (topicId: string) => {
+    setExpandedTopics((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(topicId)) {
+        newSet.delete(topicId)
+      } else {
+        newSet.add(topicId)
+      }
+      return newSet
+    })
+  }
 
   const timeRanges: { value: "7d" | "30d" | "90d" | "all"; label: string }[] = [
     { value: "7d", label: "Last 7 Days" },
@@ -130,15 +100,16 @@ export function Stats({ onBack, onLogout }: StatsProps) {
       {/* Sidebar */}
       <div className="w-80 border-r border-border bg-card flex flex-col">
         <div className="p-6 border-b border-border">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">B</span>
-            </div>
-            <span className="font-semibold text-foreground">Beard Harris Knowledge Bot</span>
+          <div className="relative h-12 w-full flex-shrink-0">
+            <Image
+              src="/beaird-harris-logo.png"
+              alt="Beaird Harris"
+              width={300}
+              height={69}
+              className="h-12 w-full object-contain"
+              priority
+            />
           </div>
-          <Button onClick={onBack} variant="outline" className="w-full">
-            ← Back to Chat
-          </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
@@ -148,27 +119,6 @@ export function Stats({ onBack, onLogout }: StatsProps) {
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <Filter className="w-4 h-4" />
                 Filters
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">
-                  Staff Grade
-                </label>
-                <div className="space-y-1">
-                  {staffGrades.map((grade) => (
-                    <button
-                      key={grade.value}
-                      onClick={() => setSelectedGrade(grade.value)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        selectedGrade === grade.value
-                          ? "bg-primary text-primary-foreground"
-                          : "text-foreground hover:bg-muted"
-                      }`}
-                    >
-                      {grade.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <div>
@@ -201,32 +151,57 @@ export function Stats({ onBack, onLogout }: StatsProps) {
       <div className="flex-1 flex flex-col overflow-y-auto">
         <header className="border-b border-border bg-card px-8 py-6">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={onBack}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
               <h1 className="text-2xl font-semibold text-foreground">Analytics & Insights</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Track hot topics, frequently asked questions, and documentation gaps
-              </p>
             </div>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 bg-muted">
-                <AvatarFallback className="bg-gradient-to-br from-green-400 to-green-500 text-white font-semibold">
-                  AH
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-sm font-medium text-foreground">Alex Hartman</p>
-                <p className="text-xs text-muted-foreground">Beard Harris</p>
-              </div>
-              {onLogout && (
-                <Button
-                  onClick={onLogout}
-                  variant="ghost"
-                  size="sm"
-                  className="ml-4 text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  Logout
-                </Button>
-              )}
+            <div className="relative" ref={accountMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsAccountMenuOpen((prev) => !prev)}
+                className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <Avatar className="h-8 w-8 bg-muted">
+                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                    AH
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden sm:inline text-sm font-medium text-foreground">Alex Hartman</span>
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${isAccountMenuOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {isAccountMenuOpen ? (
+                <div className="absolute right-0 z-10 mt-3 w-48 rounded-lg border border-border bg-popover p-1 shadow-lg">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-foreground hover:bg-muted"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </Button>
+                  {onLogout && (
+                    <Button
+                      onClick={onLogout}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </Button>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
         </header>
@@ -240,105 +215,69 @@ export function Stats({ onBack, onLogout }: StatsProps) {
                 <h2 className="text-xl font-semibold text-foreground">Trending Topics</h2>
               </div>
               <div className="space-y-4">
-                {mockTopics.map((topic) => (
-                  <div key={topic.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg font-semibold text-foreground">{topic.topic}</span>
-                        <span
-                          className={`text-xs px-2 py-1 rounded ${
-                            topic.trend === "up"
-                              ? "bg-green-100 text-green-700"
-                              : topic.trend === "down"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {topic.trend === "up" ? "↑" : topic.trend === "down" ? "↓" : "→"} {Math.abs(topic.change)}%
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">{topic.count} questions asked</p>
-                    </div>
-                    <BarChart3 className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                ))}
-              </div>
-            </div>
+                {mockTopics.map((topic) => {
+                  const isExpanded = expandedTopics.has(topic.id)
+                  const topicQuestions = mockQuestions.filter((q) =>
+                    q.question.toLowerCase().includes(topic.topic.toLowerCase().split(" ")[0].toLowerCase())
+                  )
 
-            {/* Frequently Asked Questions */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-foreground">Frequently Asked Questions</h2>
-              </div>
-              <div className="space-y-3">
-                {mockQuestions.map((question, index) => (
-                  <div key={question.id} className="flex items-start gap-4 p-4 bg-muted rounded-lg">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-semibold text-primary">#{index + 1}</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{question.question}</p>
-                      <div className="flex items-center gap-4 mt-2">
-                        <span className="text-xs text-muted-foreground">{question.count} times asked</span>
-                        <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded">{question.category}</span>
+                  return (
+                    <div key={topic.id} className="border border-border rounded-lg overflow-hidden">
+                      <div className="flex items-center justify-between p-4 bg-muted">
+                        <div className="flex items-center gap-3 flex-1">
+                          <button
+                            onClick={() => toggleTopic(topic.id)}
+                            className="flex items-center justify-center w-6 h-6 hover:bg-background rounded transition-colors"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <span className="text-lg font-semibold text-foreground">{topic.topic}</span>
+                              <span
+                                className={`text-xs px-2 py-1 rounded ${
+                                  topic.trend === "up"
+                                    ? "bg-green-100 text-green-700"
+                                    : topic.trend === "down"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-gray-100 text-gray-700"
+                                }`}
+                              >
+                                {topic.trend === "up" ? "↑" : topic.trend === "down" ? "↓" : "→"} {Math.abs(topic.change)}%
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{topic.count} questions asked</p>
+                          </div>
+                        </div>
+                        <BarChart3 className="w-8 h-8 text-muted-foreground" />
                       </div>
+                      {isExpanded && topicQuestions.length > 0 && (
+                        <div className="p-4 bg-background border-t border-border">
+                          <div className="space-y-3">
+                            {topicQuestions.map((question, index) => (
+                              <div key={question.id} className="flex items-start gap-4 p-3 bg-muted rounded-lg">
+                                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <span className="text-xs font-semibold text-primary">#{index + 1}</span>
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-foreground">{question.question}</p>
+                                  <div className="flex items-center gap-4 mt-1">
+                                    <span className="text-xs text-muted-foreground">{question.count} times asked</span>
+                                    <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded">{question.category}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Areas Needing Documentation */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <FileText className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-foreground">Areas Needing More Documentation</h2>
-              </div>
-              <div className="space-y-4">
-                {mockDocumentationGaps.map((gap) => (
-                  <div
-                    key={gap.id}
-                    className={`p-4 rounded-lg border ${
-                      gap.urgency === "high"
-                        ? "bg-red-50 border-red-200"
-                        : gap.urgency === "medium"
-                          ? "bg-yellow-50 border-yellow-200"
-                          : "bg-blue-50 border-blue-200"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-foreground">{gap.topic}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {gap.questionCount} related questions asked
-                        </p>
-                      </div>
-                      <span
-                        className={`text-xs px-2 py-1 rounded font-medium ${
-                          gap.urgency === "high"
-                            ? "bg-red-100 text-red-700"
-                            : gap.urgency === "medium"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
-                        {gap.urgency.toUpperCase()} PRIORITY
-                      </span>
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-xs font-medium text-muted-foreground mb-2">Sample Questions:</p>
-                      <ul className="space-y-1">
-                        {gap.relatedQuestions.slice(0, 3).map((q, idx) => (
-                          <li key={idx} className="text-xs text-muted-foreground flex items-start gap-2">
-                            <span className="text-primary mt-1">•</span>
-                            <span>{q}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>

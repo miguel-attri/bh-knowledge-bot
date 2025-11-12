@@ -1,25 +1,37 @@
 "use client"
 
-import { useState } from "react"
-import { FolderPlus, X } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Edit, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-interface CreateProjectDialogProps {
+
+interface RenameProjectDialogProps {
   isOpen: boolean
+  currentName: string
   onClose: () => void
-  onCreate: (name: string) => void
+  onRename: (newName: string) => void
 }
 
-export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProjectDialogProps) {
-  const [projectName, setProjectName] = useState("")
+export function RenameProjectDialog({
+  isOpen,
+  currentName,
+  onClose,
+  onRename,
+}: RenameProjectDialogProps) {
+  const [newName, setNewName] = useState(currentName)
+
+  useEffect(() => {
+    if (isOpen) {
+      setNewName(currentName)
+    }
+  }, [isOpen, currentName])
 
   if (!isOpen) return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (projectName.trim()) {
-      onCreate(projectName.trim())
-      setProjectName("")
+    if (newName.trim() && newName.trim() !== currentName) {
+      onRename(newName.trim())
       onClose()
     }
   }
@@ -32,8 +44,8 @@ export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProject
       >
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <FolderPlus className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">Create New Project</h2>
+            <Edit className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Rename Project</h2>
           </div>
           <button
             onClick={onClose}
@@ -50,9 +62,9 @@ export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProject
             <Input
               id="project-name"
               type="text"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              placeholder="e.g., Q4 Marketing Campaign"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Enter project name"
               className="w-full"
               autoFocus
             />
@@ -61,8 +73,8 @@ export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProject
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!projectName.trim()}>
-              Create Project
+            <Button type="submit" disabled={!newName.trim() || newName.trim() === currentName}>
+              Rename
             </Button>
           </div>
         </form>
@@ -70,4 +82,3 @@ export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProject
     </div>
   )
 }
-

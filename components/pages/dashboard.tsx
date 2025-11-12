@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import { Search, Settings, LogOut, MessageCircle, ChevronDown, ChevronRight, Plus, Mic, Send, BarChart3, Folder, FolderOpen } from "lucide-react"
+import { Search, Settings, LogOut, MessageCircle, ChevronDown, Plus, Mic, Send, BarChart3, FolderOpen } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { ProjectFolder, type Project, type ProjectFile } from "@/components/proj
 import { CreateProjectDialog } from "@/components/create-project-dialog"
 import { ConversationActionsMenu } from "@/components/conversation-actions-menu"
 import { RenameConversationDialog } from "@/components/rename-conversation-dialog"
+import { RenameProjectDialog } from "@/components/rename-project-dialog"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { FolderPlus } from "lucide-react"
 
@@ -352,11 +353,12 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   const [projects, setProjects] = useState<Project[]>([])
   const [showCreateProjectDialog, setShowCreateProjectDialog] = useState(false)
   const [showRenameDialog, setShowRenameDialog] = useState(false)
+  const [showRenameProjectDialog, setShowRenameProjectDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [pendingSuggestion, setPendingSuggestion] = useState<string | null>(null)
-  const [isChatExpanded, setIsChatExpanded] = useState(true)
-  const [expandedDateCategories, setExpandedDateCategories] = useState<Set<string>>(new Set(["TODAY", "YESTERDAY", "PREVIOUS 7 DAYS", "OLDER"]))
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
 
   // Suggested follow-up questions - can be customized per conversation
   const getSuggestedQuestions = (conversationId: string | null): string[] => {
@@ -397,33 +399,21 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   // Project management handlers
   const handleCreateProject = (name: string) => {
     const now = Date.now()
-    // Automatically create a new conversation for the project
-    const newConversation: Conversation = {
-      id: `conv-${now}`,
-      title: `${name} - New Conversation`,
-      date: "TODAY",
-      timestamp: now,
-      createdAt: now,
-      lastUpdated: now,
-      archived: false,
-    }
-    
+
     const newProject: Project = {
       id: `project-${now}`,
       name,
       createdAt: now,
       lastUpdated: now,
-      conversationIds: [newConversation.id],
+      conversationIds: [],
       files: [],
     }
-    
-    // Add the conversation to the list and set it as active
-    setConversationsList((prev) => [newConversation, ...prev])
+
     setProjects((prev) => [...prev, newProject])
-    setActiveConversationId(newConversation.id)
-    setMessagesByConversation((prev) => ({ ...prev, [newConversation.id]: [] }))
+    setActiveConversationId(null)
+    setActiveProjectId(newProject.id)
     setShowCreateProjectDialog(false)
-    
+
     // If there's a pending suggestion, set it as the message input
     if (pendingSuggestion) {
       setTimeout(() => {
@@ -463,8 +453,24 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
     )
   }
 
+  const handleRenameProject = (projectId: string) => {
+    setSelectedProjectId(projectId)
+    setShowRenameProjectDialog(true)
+  }
+
+  const handleRenameProjectSubmit = (projectId: string, newName: string) => {
+    setProjects((prev) =>
+      prev.map((project) => (project.id === projectId ? { ...project, name: newName, lastUpdated: Date.now() } : project)),
+    )
+    setShowRenameProjectDialog(false)
+    setSelectedProjectId(null)
+  }
+
   const handleDeleteProject = (projectId: string) => {
     setProjects((prev) => prev.filter((project) => project.id !== projectId))
+    if (activeProjectId === projectId) {
+      setActiveProjectId(null)
+    }
   }
 
   const handleAddFileToProject = (projectId: string, file: File) => {
@@ -611,13 +617,8 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
     }
   }, [activeMessages, isBotTyping])
 
-  // Automatically create a new session on mount if no active conversation
-  useEffect(() => {
-    if (activeConversationId === null) {
-      handleAddSession()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // Don't auto-create a session on mount - show the default "What's on the agenda" view
+  // useEffect removed - sessions are created only when user sends first message
 
   const resetBotTyping = () => {
     if (replyTimeoutRef.current) {
@@ -627,26 +628,22 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   }
 
   const handleAddSession = () => {
-    const now = Date.now()
-    const newConversation: Conversation = {
-      id: now.toString(),
-      title: "New Conversation",
-      date: "TODAY", // This will be calculated dynamically in grouping
-      timestamp: now,
-      createdAt: now,
-      lastUpdated: now,
-      archived: false,
-    }
-
-    setConversationsList((prev) => [newConversation, ...prev])
-    setActiveConversationId(newConversation.id)
-    setMessagesByConversation((prev) => ({ ...prev, [newConversation.id]: [] }))
+    setActiveConversationId(null)
+    setActiveProjectId(null)
     setSearchQuery("")
     resetBotTyping()
   }
 
   const handleSelectConversation = (conversationId: string) => {
     setActiveConversationId(conversationId)
+    setActiveProjectId(null)
+    setSearchQuery("")
+    resetBotTyping()
+  }
+
+  const handleSelectProject = (projectId: string) => {
+    setActiveConversationId(null)
+    setActiveProjectId(projectId)
     setSearchQuery("")
     resetBotTyping()
   }
@@ -680,16 +677,48 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
 
   const handleSendMessage = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!activeConversationId) {
-      return
-    }
 
     const trimmed = messageInput.trim()
     if (!trimmed) {
       return
     }
 
-    const conversationId = activeConversationId
+    const now = Date.now()
+    let conversationId = activeConversationId
+
+    // If no active conversation, create one now
+    if (!conversationId) {
+      conversationId = now.toString()
+      const newConversation: Conversation = {
+        id: conversationId,
+        title: trimmed.slice(0, 50), // Use first part of message as title
+        date: "TODAY",
+        timestamp: now,
+        createdAt: now,
+        lastUpdated: now,
+        archived: false,
+      }
+
+      setConversationsList((prev) => [newConversation, ...prev])
+      setActiveConversationId(conversationId)
+
+      // If we're in a project context, add this conversation to that project
+      if (activeProjectId) {
+        setProjects((prev) =>
+          prev.map((project) => {
+            if (project.id === activeProjectId) {
+              return {
+                ...project,
+                conversationIds: [...project.conversationIds, conversationId],
+                lastUpdated: now,
+              }
+            }
+            return project
+          }),
+        )
+      }
+    }
+
     const userMessage: ConversationMessage = {
       id: `${conversationId}-${Date.now()}-user`,
       sender: "user",
@@ -741,16 +770,8 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
 
     const textareaId = variant === "floating" ? "composer-input-floating" : "composer-input-docked"
     const isEmpty = messageInput.trim().length === 0
-    const labelText = isEmpty
-      ? activeConversation
-        ? "Ask Anything"
-        : "Create a session to start chatting"
-      : ""
-    const labelTone = isEmpty
-      ? activeConversation
-        ? "text-muted-foreground"
-        : "text-muted-foreground/60"
-      : "text-muted-foreground"
+    const labelText = isEmpty ? "Ask Anything" : ""
+    const labelTone = "text-muted-foreground"
 
     return (
       <div className="w-full">
@@ -759,7 +780,6 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
           type="button"
           className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition hover:bg-primary/15"
           aria-label="Add attachment"
-          disabled={!activeConversation}
         >
           <Plus className="h-5 w-5" />
         </button>
@@ -785,13 +805,10 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault()
-                if (activeConversation) {
-                  event.currentTarget.form?.requestSubmit()
-                }
+                event.currentTarget.form?.requestSubmit()
               }
             }}
             placeholder=""
-            disabled={!activeConversation}
             className="w-full resize-none overflow-y-hidden bg-transparent text-base text-foreground leading-relaxed placeholder:text-muted-foreground focus:outline-none max-h-24"
             style={{ minHeight: "2.5rem" }}
           />
@@ -802,7 +819,6 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
             type="button"
             className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted disabled:opacity-50"
             aria-label="Start voice input"
-            disabled={!activeConversation}
           >
             <Mic className="h-5 w-5" />
           </button>
@@ -810,7 +826,7 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
             type="submit"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
             aria-label="Send message"
-            disabled={!activeConversation || !messageInput.trim()}
+            disabled={!messageInput.trim()}
           >
             <Send className="h-5 w-5" />
           </button>
@@ -891,7 +907,10 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
                       project={project}
                       conversations={conversationsList}
                       currentConversationId={activeConversationId || ""}
+                      activeProjectId={activeProjectId}
                       onSelectConversation={handleSelectConversation}
+                      onSelectProject={handleSelectProject}
+                      onRenameProject={handleRenameProject}
                       onRemoveConversation={handleRemoveConversationFromProject}
                       onDeleteProject={handleDeleteProject}
                       onAddFile={handleAddFileToProject}
@@ -912,7 +931,7 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
               </div>
             )}
 
-            {/* Chat Section - Collapsible */}
+            {/* Chat Section */}
             {(() => {
               const hasUnorganizedConversations = dateOrder.some((date) => {
                 const dateConversations = groupedConversations[date]?.filter(
@@ -925,110 +944,69 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
 
               return (
                 <div>
-                  <button
-                    onClick={() => setIsChatExpanded(!isChatExpanded)}
-                    className="flex items-center gap-2 w-full px-2 py-2 rounded-lg hover:bg-muted transition-colors text-left mb-2"
-                  >
-                    {isChatExpanded ? (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    )}
-                    {isChatExpanded ? (
-                      <FolderOpen className="w-4 h-4 text-primary" />
-                    ) : (
-                      <Folder className="w-4 h-4 text-primary" />
-                    )}
+                  <div className="flex items-center gap-2 px-2 py-2 mb-2">
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Chat
                     </h3>
-                  </button>
-                  {isChatExpanded && (
-                    <div className="ml-6 space-y-2">
-                      {dateOrder.map((date) => {
-                        const dateConversations = groupedConversations[date]?.filter(
-                          (conv) => !projectConversationIds.has(conv.id),
-                        )
-                        if (!dateConversations || dateConversations.length === 0) return null
+                  </div>
+                  <div className="space-y-2">
+                    {dateOrder.map((date) => {
+                      const dateConversations = groupedConversations[date]?.filter(
+                        (conv) => !projectConversationIds.has(conv.id),
+                      )
+                      if (!dateConversations || dateConversations.length === 0) return null
 
-                        const isDateExpanded = expandedDateCategories.has(date)
-                        const toggleDateCategory = () => {
-                          setExpandedDateCategories((prev) => {
-                            const newSet = new Set(prev)
-                            if (newSet.has(date)) {
-                              newSet.delete(date)
-                            } else {
-                              newSet.add(date)
-                            }
-                            return newSet
-                          })
-                        }
-
-                        return (
-                          <div key={date}>
-                            <button
-                              onClick={toggleDateCategory}
-                              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg hover:bg-muted transition-colors text-left mb-1"
-                            >
-                              {isDateExpanded ? (
-                                <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                              ) : (
-                                <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                              )}
-                              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                {date}
-                              </h3>
-                            </button>
-                            {isDateExpanded && (
-                              <div className="space-y-1 ml-5">
-                                {dateConversations.map((conv) => {
-                                  const isActive = conv.id === activeConversationId
-                                  return (
-                                    <ChatHoverCard
-                                      key={conv.id}
-                                      metadata={{
-                                        createdAt: conv.createdAt,
-                                        lastUpdated: conv.lastUpdated,
-                                      }}
-                                    >
-                                      <div className="flex items-center group">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleSelectConversation(conv.id)}
-                                          className={`flex-1 flex items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
-                                            isActive ? "bg-muted" : "hover:bg-muted"
-                                          }`}
-                                        >
-                                          <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                                          <span className="text-sm text-foreground truncate">{conv.title}</span>
-                                        </button>
-                                        <div className="flex items-center gap-1">
-                                          <ConversationActionsMenu
-                                            conversationId={conv.id}
-                                            conversationTitle={conv.title}
-                                            projects={projects}
-                                            onRename={() => {
-                                              setSelectedConversationId(conv.id)
-                                              setShowRenameDialog(true)
-                                            }}
-                                            onDelete={() => {
-                                              setSelectedConversationId(conv.id)
-                                              setShowDeleteDialog(true)
-                                            }}
-                                            onAddToProject={handleAddConversationToProject}
-                                          />
-                                        </div>
-                                      </div>
-                                    </ChatHoverCard>
-                                  )
-                                })}
-                              </div>
-                            )}
+                      return (
+                        <div key={date}>
+                          <div className="flex items-center gap-2 px-2 py-1.5 mb-1">
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              {date}
+                            </h3>
                           </div>
-                        )
-                      })}
-                    </div>
-                  )}
+                          <div className="space-y-1">
+                            {dateConversations.map((conv) => {
+                              const isActive = conv.id === activeConversationId
+                              return (
+                                <ChatHoverCard
+                                  key={conv.id}
+                                  metadata={{
+                                    createdAt: conv.createdAt,
+                                    lastUpdated: conv.lastUpdated,
+                                  }}
+                                >
+                                  <div className={`flex items-center gap-3 rounded-lg px-3 py-2 transition group ${
+                                    isActive ? "bg-muted" : "hover:bg-muted"
+                                  }`}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSelectConversation(conv.id)}
+                                      className="flex-1 flex items-center gap-3 text-left min-w-0"
+                                    >
+                                      <span className="text-sm text-foreground truncate">{conv.title}</span>
+                                    </button>
+                                    <ConversationActionsMenu
+                                      conversationId={conv.id}
+                                      conversationTitle={conv.title}
+                                      projects={projects}
+                                      onRename={() => {
+                                        setSelectedConversationId(conv.id)
+                                        setShowRenameDialog(true)
+                                      }}
+                                      onDelete={() => {
+                                        setSelectedConversationId(conv.id)
+                                        setShowDeleteDialog(true)
+                                      }}
+                                      onAddToProject={handleAddConversationToProject}
+                                    />
+                                  </div>
+                                </ChatHoverCard>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )
             })()}
@@ -1103,31 +1081,15 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
                     hasMessages ? "" : "flex items-center justify-center"
                   } min-h-[320px]`}
                 >
-                  {activeConversation ? (
-                    hasMessages ? (
-                      <div className="mx-auto w-full max-w-3xl space-y-5 px-1 pb-12">
-                        {activeMessages.map((message) => {
-                          const isUser = message.sender === "user"
+                  {hasMessages ? (
+                    <div className="mx-auto w-full max-w-3xl space-y-5 px-1 pb-12">
+                      {activeMessages.map((message) => {
+                        const isUser = message.sender === "user"
 
-                          if (isUser) {
-                            return (
-                              <div key={message.id} className="flex justify-end">
-                                <div className="max-w-[70ch] rounded-3xl bg-primary px-4 py-3 text-sm leading-6 text-primary-foreground shadow-sm">
-                                  <ReactMarkdown
-                                    remarkPlugins={[remarkGfm]}
-                                    components={markdownComponents}
-                                    className="markdown-content"
-                                  >
-                                    {message.text}
-                                  </ReactMarkdown>
-                                </div>
-                              </div>
-                            )
-                          }
-
+                        if (isUser) {
                           return (
-                            <div key={message.id} className="flex justify-start">
-                              <div className="w-full max-w-3xl px-6 py-5 text-base leading-relaxed text-foreground">
+                            <div key={message.id} className="flex justify-end">
+                              <div className="max-w-[70ch] rounded-3xl bg-primary px-4 py-3 text-sm leading-6 text-primary-foreground shadow-sm">
                                 <ReactMarkdown
                                   remarkPlugins={[remarkGfm]}
                                   components={markdownComponents}
@@ -1138,55 +1100,104 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
                               </div>
                             </div>
                           )
-                        })}
+                        }
 
-                        {isBotTyping ? (
-                          <div className="flex justify-start">
-                            <div className="w-full max-w-3xl px-6 py-3 text-sm text-muted-foreground">
-                              Knowledge Bot is drafting a response&hellip;
+                        return (
+                          <div key={message.id} className="flex justify-start">
+                            <div className="w-full max-w-3xl px-6 py-5 text-base leading-relaxed text-foreground">
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={markdownComponents}
+                                className="markdown-content"
+                              >
+                                {message.text}
+                              </ReactMarkdown>
                             </div>
                           </div>
-                        ) : null}
-                        <div ref={messagesEndRef} />
-                      </div>
-                    ) : (
-                      <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-4 px-8 text-center">
-                        <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
-                          <MessageCircle className="w-12 h-12 text-muted-foreground" />
+                        )
+                      })}
+
+                      {isBotTyping ? (
+                        <div className="flex justify-start">
+                          <div className="w-full max-w-3xl px-6 py-3 text-sm text-muted-foreground">
+                            Knowledge Bot is drafting a response&hellip;
+                          </div>
                         </div>
-                        <div className="space-y-3">
-                          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                            New conversation
-                          </p>
-                          <h2 className="text-3xl font-semibold text-foreground">
-                            What&apos;s on the agenda today?
-                          </h2>
-                          <p className="text-muted-foreground">
-                            Ask anything about Beaird Harris policies, processes, and resources to get started.
-                          </p>
-                        </div>
-                        {renderComposer("floating")}
-                        {suggestedQuestions.length > 0 && activeConversation && (
-                          <SuggestedQuestions 
-                            questions={suggestedQuestions} 
-                            onSelectQuestion={handleSelectQuestion}
-                            className="mt-6"
-                          />
-                        )}
-                      </div>
-                    )
+                      ) : null}
+                      <div ref={messagesEndRef} />
+                    </div>
                   ) : (
                     <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-4 px-8 text-center">
-                      <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
-            <MessageCircle className="w-12 h-12 text-muted-foreground" />
-          </div>
-                      <div className="space-y-2">
-                        <h2 className="text-2xl font-semibold text-foreground">Create a session to get started</h2>
-            <p className="text-muted-foreground">
-                          Start a new session from the sidebar to begin a conversation.
-            </p>
-          </div>
-        </div>
+                      {activeProjectId ? (
+                        <>
+                          <div className="w-full flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <FolderOpen className="w-8 h-8 text-primary" />
+                              <h2 className="text-3xl font-semibold text-foreground">
+                                {projects.find((p) => p.id === activeProjectId)?.name || "Project"}
+                              </h2>
+                            </div>
+                            <Button
+                              variant="outline"
+                              className="rounded-full px-6 hover:bg-muted"
+                            >
+                              Add files
+                            </Button>
+                          </div>
+                          {renderComposer("floating")}
+                          {(() => {
+                            const activeProject = projects.find((p) => p.id === activeProjectId)
+                            const projectConversations = conversationsList.filter(
+                              (conv) => activeProject?.conversationIds.includes(conv.id)
+                            )
+
+                            if (projectConversations.length === 0) return null
+
+                            return (
+                              <div className="w-full mt-8 divide-y divide-border">
+                                {projectConversations.map((conv) => {
+                                  const isActive = conv.id === activeConversationId
+                                  return (
+                                    <button
+                                      key={conv.id}
+                                      onClick={() => handleSelectConversation(conv.id)}
+                                      className={`w-full text-left px-4 py-4 transition flex items-start justify-between gap-4 ${
+                                        isActive ? "bg-muted" : "hover:bg-muted"
+                                      }`}
+                                    >
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-foreground mb-1">{conv.title}</div>
+                                        <div className="text-sm text-muted-foreground truncate">
+                                          {messagesByConversation[conv.id]?.[0]?.text || ""}
+                                        </div>
+                                      </div>
+                                      <div className="text-sm text-muted-foreground flex-shrink-0">
+                                        {new Date(conv.lastUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                      </div>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            )
+                          })()}
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
+                            <MessageCircle className="w-12 h-12 text-muted-foreground" />
+                          </div>
+                          <div className="space-y-3">
+                            <h2 className="text-3xl font-semibold text-foreground">
+                              What&apos;s on the agenda today?
+                            </h2>
+                            <p className="text-muted-foreground">
+                              Ask anything about Beaird Harris policies, processes, and resources to get started.
+                            </p>
+                          </div>
+                          {renderComposer("floating")}
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -1194,14 +1205,14 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
 
             {hasMessages ? (
               <footer className="px-8 pb-10 pt-6">
-                {renderComposer("docked")}
                 {suggestedQuestions.length > 0 && activeConversation && (
-                  <SuggestedQuestions 
-                    questions={suggestedQuestions} 
+                  <SuggestedQuestions
+                    questions={suggestedQuestions}
                     onSelectQuestion={handleSelectQuestion}
-                    className="mt-4"
+                    className="mb-4"
                   />
                 )}
+                {renderComposer("docked")}
               </footer>
             ) : null}
           </div>
@@ -1214,6 +1225,19 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
         onClose={() => setShowCreateProjectDialog(false)}
         onCreate={handleCreateProject}
       />
+
+      {/* Rename Project Dialog */}
+      {selectedProjectId && (
+        <RenameProjectDialog
+          isOpen={showRenameProjectDialog}
+          currentName={projects.find((p) => p.id === selectedProjectId)?.name || ""}
+          onClose={() => {
+            setShowRenameProjectDialog(false)
+            setSelectedProjectId(null)
+          }}
+          onRename={(newName) => handleRenameProjectSubmit(selectedProjectId, newName)}
+        />
+      )}
 
       {/* Rename Conversation Dialog */}
       {selectedConversation && (

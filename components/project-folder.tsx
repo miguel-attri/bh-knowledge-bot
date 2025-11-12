@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, File, X } from "lucide-react"
+import { Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Edit, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ChatHoverCard } from "@/components/chat-hover-card"
-import { ConversationActionsMenu } from "@/components/conversation-actions-menu"
+import { ProjectConversationActionsMenu } from "@/components/project-conversation-actions-menu"
 
 export interface ProjectFile {
   id: string
@@ -36,7 +36,10 @@ interface ProjectFolderProps {
   project: Project
   conversations: Conversation[]
   currentConversationId: string
+  activeProjectId?: string | null
   onSelectConversation: (id: string) => void
+  onSelectProject?: (projectId: string) => void
+  onRenameProject?: (projectId: string) => void
   onRemoveConversation?: (projectId: string, conversationId: string) => void
   onDeleteProject?: (projectId: string) => void
   onAddFile?: (projectId: string, file: File) => void
@@ -51,7 +54,10 @@ export function ProjectFolder({
   project,
   conversations,
   currentConversationId,
+  activeProjectId,
   onSelectConversation,
+  onSelectProject,
+  onRenameProject,
   onRemoveConversation,
   onDeleteProject,
   onAddFile,
@@ -94,32 +100,41 @@ export function ProjectFolder({
     e.target.value = ""
   }
 
+  const isProjectActive = activeProjectId === project.id && !currentConversationId
+
   return (
     <div className="mb-2">
       {/* Project Header */}
-      <div className="flex items-center gap-2 group">
+      <div className={`flex items-center gap-2 px-2 py-2 rounded-lg transition-colors group ${
+        isProjectActive ? "bg-muted" : "hover:bg-muted"
+      }`}>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 flex-1 px-2 py-2 rounded-lg hover:bg-muted transition-colors text-left"
+          className="flex items-center gap-2 min-w-0 flex-shrink-0"
         >
           {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           )}
           {isExpanded ? (
-            <FolderOpen className="w-4 h-4 text-primary" />
+            <FolderOpen className="w-4 h-4 text-primary flex-shrink-0" />
           ) : (
-            <Folder className="w-4 h-4 text-primary" />
+            <Folder className="w-4 h-4 text-primary flex-shrink-0" />
           )}
-          <span className="text-sm font-medium text-foreground flex-1 truncate">{project.name}</span>
-          <span className="text-xs text-muted-foreground">
-            {projectConversations.length} {projectConversations.length === 1 ? "chat" : "chats"}
-          </span>
         </button>
-        <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => onSelectProject?.(project.id)}
+          className="text-sm font-medium text-foreground flex-1 truncate min-w-0 text-left"
+        >
+          {project.name}
+        </button>
+        <div className="relative flex-shrink-0" ref={menuRef}>
           <button
-            onClick={() => setShowMenu(!showMenu)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowMenu(!showMenu)
+            }}
             className="p-1 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <MoreVertical className="w-4 h-4 text-muted-foreground" />
@@ -127,31 +142,28 @@ export function ProjectFolder({
           {showMenu && (
             <div className="absolute right-0 mt-1 w-48 rounded-lg border border-border bg-popover shadow-lg z-10">
               <div className="p-1">
-                <label className="block w-full">
-                  <input
-                    id={fileInputId}
-                    type="file"
-                    className="hidden"
-                    onChange={handleFileInput}
-                    multiple={false}
-                  />
+                {onRenameProject && (
                   <button
-                    type="button"
-                    className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted rounded"
-                    onClick={() => document.getElementById(fileInputId)?.click()}
+                    onClick={() => {
+                      onRenameProject(project.id)
+                      setShowMenu(false)
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted rounded flex items-center gap-2"
                   >
-                    <File className="w-4 h-4 inline mr-2" />
-                    Add File
+                    <Edit className="w-4 h-4" />
+                    Rename Project
                   </button>
-                </label>
+                )}
+                <div className="border-t border-border my-1" />
                 {onDeleteProject && (
                   <button
                     onClick={() => {
                       onDeleteProject(project.id)
                       setShowMenu(false)
                     }}
-                    className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded"
+                    className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded flex items-center gap-2"
                   >
+                    <Trash2 className="w-4 h-4" />
                     Delete Project
                   </button>
                 )}
@@ -163,7 +175,7 @@ export function ProjectFolder({
 
       {/* Project Content */}
       {isExpanded && (
-        <div className="ml-6 space-y-1 mt-1">
+        <div className="space-y-1 mt-1">
           {/* Conversations */}
           {projectConversations.map((conversation) => (
             <ChatHoverCard
@@ -173,36 +185,28 @@ export function ProjectFolder({
                 lastUpdated: conversation.lastUpdated,
               }}
             >
-              <div className="flex items-center group/item">
+              <div className={`flex items-center gap-3 rounded-lg px-3 py-2 transition group/item ${
+                currentConversationId === conversation.id ? "bg-muted" : "hover:bg-muted"
+              }`}>
+                <div className="w-6 flex-shrink-0"></div>
                 <button
+                  type="button"
                   onClick={() => onSelectConversation(conversation.id)}
-                  className={`flex-1 flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
-                    currentConversationId === conversation.id ? "bg-muted" : "hover:bg-muted"
-                  }`}
+                  className="flex-1 flex items-center gap-3 text-left min-w-0"
                 >
                   <span className="text-sm text-foreground truncate">{conversation.title}</span>
                 </button>
-                <div className="flex items-center gap-1">
-                  {onRemoveConversation && (
-                    <button
-                      onClick={() => onRemoveConversation(project.id, conversation.id)}
-                      className="p-1 rounded hover:bg-muted opacity-0 group-hover/item:opacity-100 transition-opacity"
-                      title="Remove from project"
-                    >
-                      <X className="w-3 h-3 text-muted-foreground" />
-                    </button>
-                  )}
-                  {(onRenameConversation || onDeleteConversation) && (
-                    <ConversationActionsMenu
-                      conversationId={conversation.id}
-                      conversationTitle={conversation.title}
-                      projects={projects}
-                      onRename={() => onRenameConversation?.(conversation.id)}
-                      onDelete={() => onDeleteConversation?.(conversation.id)}
-                      onAddToProject={onAddToProject}
-                    />
-                  )}
-                </div>
+                {(onRemoveConversation || onRenameConversation || onDeleteConversation) && (
+                  <ProjectConversationActionsMenu
+                    conversationId={conversation.id}
+                    conversationTitle={conversation.title}
+                    projectId={project.id}
+                    projectName={project.name}
+                    onRename={() => onRenameConversation?.(conversation.id)}
+                    onDelete={() => onDeleteConversation?.(conversation.id)}
+                    onRemoveFromProject={(projectId, conversationId) => onRemoveConversation?.(projectId, conversationId)}
+                  />
+                )}
               </div>
             </ChatHoverCard>
           ))}

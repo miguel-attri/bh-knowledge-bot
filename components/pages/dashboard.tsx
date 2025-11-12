@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import { Search, Settings, LogOut, MessageCircle, ChevronDown, Plus, Mic, Send, BarChart3, FolderOpen } from "lucide-react"
+import { Search, Settings, LogOut, MessageCircle, ChevronDown, Plus, Mic, Send, BarChart3, FolderOpen, ArrowUp } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Button } from "@/components/ui/button"
@@ -762,76 +762,95 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
     }, 450)
   }
 
-  const renderComposer = (variant: "floating" | "docked") => {
-    const baseClasses =
-      variant === "floating"
-        ? "mx-auto mt-6 flex w-full max-w-2xl items-end gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-sm backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
-        : "mx-auto flex w-full max-w-3xl items-end gap-4 rounded-full border border-border/40 bh-input-gradient px-5 py-3 shadow-none backdrop-blur focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+  const adjustComposerHeight = () => {
+    if (textareaRef.current) {
+      // Reset height to calculate proper scrollHeight
+      textareaRef.current.style.height = 'auto'
 
-    const textareaId = variant === "floating" ? "composer-input-floating" : "composer-input-docked"
-    const isEmpty = messageInput.trim().length === 0
-    const labelText = isEmpty ? "Ask Anything" : ""
-    const labelTone = "text-muted-foreground"
+      // Calculate line height (approximation based on font size)
+      const lineHeight = 24 // Approximate line height in pixels
+      const maxHeight = lineHeight * 6 // Maximum height for 6 lines
+
+      // Set the height based on content, but cap it at maxHeight
+      const newHeight = Math.min(textareaRef.current.scrollHeight, maxHeight)
+      textareaRef.current.style.height = `${newHeight}px`
+
+      // Add overflow scrolling if content exceeds maxHeight
+      textareaRef.current.style.overflowY =
+        textareaRef.current.scrollHeight > maxHeight ? 'auto' : 'hidden'
+    }
+  }
+
+  const renderComposer = (variant: "floating" | "docked") => {
+    const containerClasses = variant === "floating"
+      ? "mx-auto mt-6 w-full max-w-2xl"
+      : "mx-auto w-full max-w-3xl"
+
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (
+        event.key === 'Enter' &&
+        !event.shiftKey &&
+        !event.nativeEvent.isComposing
+      ) {
+        event.preventDefault()
+        if (messageInput?.trim()) {
+          event.currentTarget.form?.requestSubmit()
+        }
+      }
+    }
 
     return (
-      <div className="w-full">
-      <form onSubmit={handleSendMessage} className={baseClasses}>
-        <button
-          type="button"
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition hover:bg-primary/15"
-          aria-label="Add attachment"
-        >
-          <Plus className="h-5 w-5" />
-        </button>
+      <div className={containerClasses}>
+        <form onSubmit={handleSendMessage} className="relative bg-white rounded-lg shadow-sm transition-all">
+          {/* Container for textarea and buttons */}
+          <div className="relative pb-3 pt-4 pl-6 pr-3">
+            {/* Textarea with minimal bottom padding */}
+            <div className="pb-2">
+              <textarea
+                ref={textareaRef}
+                placeholder="Ask anything"
+                disabled={isBotTyping}
+                className="mb-6 min-h-[24px] resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 rounded-md w-full text-foreground placeholder:text-muted-foreground focus:outline-none"
+                value={messageInput}
+                onChange={(event) => {
+                  setMessageInput(event.target.value)
+                  adjustComposerHeight()
+                }}
+                onKeyDown={handleKeyDown}
+                rows={1}
+              />
+            </div>
 
-        <div className="flex flex-1 flex-col gap-1">
-          {labelText ? (
-            <label htmlFor={textareaId} className={`text-xs font-semibold tracking-wide ${labelTone}`}>
-              {labelText}
-            </label>
-          ) : null}
-          <textarea
-            ref={(node) => {
-              textareaRef.current = node
-              syncTextareaHeight(node)
-            }}
-            id={textareaId}
-            rows={1}
-            value={messageInput}
-            onChange={(event) => {
-              setMessageInput(event.target.value)
-              syncTextareaHeight(event.currentTarget)
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault()
-                event.currentTarget.form?.requestSubmit()
-              }
-            }}
-            placeholder=""
-            className="w-full resize-none overflow-y-hidden bg-transparent text-base text-foreground leading-relaxed placeholder:text-muted-foreground focus:outline-none max-h-24"
-            style={{ minHeight: "2.5rem" }}
-          />
-        </div>
+            {/* Plus button positioned at the bottom left */}
+            <div className="absolute bottom-3 left-3">
+              <button
+                type="button"
+                className="h-9 w-9 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground"
+                aria-label="Add attachment"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            </div>
 
-        <div className="flex items-end gap-2">
-          <button
-            type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted disabled:opacity-50"
-            aria-label="Start voice input"
-          >
-            <Mic className="h-5 w-5" />
-          </button>
-          <button
-            type="submit"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
-            aria-label="Send message"
-            disabled={!messageInput.trim()}
-          >
-            <Send className="h-5 w-5" />
-          </button>
-        </div>
-      </form>
+            {/* Mic and Send buttons positioned at the bottom right */}
+            <div className="absolute bottom-3 right-3 flex items-center gap-2">
+              <button
+                type="button"
+                className="h-9 w-9 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground"
+                aria-label="Start voice input"
+              >
+                <Mic className="h-5 w-5" />
+              </button>
+              <button
+                type="submit"
+                className="h-9 w-9 rounded-full border bg-primary hover:bg-primary/90 flex items-center justify-center"
+                disabled={isBotTyping || !messageInput?.trim()}
+              >
+                <ArrowUp className="h-5 w-5 text-primary-foreground" />
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     )
   }

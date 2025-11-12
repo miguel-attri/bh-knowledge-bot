@@ -1,46 +1,23 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Login } from "@/components/pages/login"
-import { Dashboard } from "@/components/pages/dashboard"
-import { Stats } from "@/components/pages/stats"
-
-type AppPage = "login" | "dashboard" | "stats"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function Home() {
-  const [currentPage, setCurrentPage] = useState<AppPage>("login")
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const router = useRouter()
 
-  // Check authentication on mount (simulate with localStorage)
   useEffect(() => {
-    const auth = localStorage.getItem("isAuthenticated")
-    if (auth === "true") {
-      setIsAuthenticated(true)
-      setCurrentPage("dashboard")
+    const isAuthenticated = localStorage.getItem("isAuthenticated")
+    if (isAuthenticated === "true") {
+      router.push("/dashboard")
+    } else {
+      router.push("/login")
     }
-  }, [])
+  }, [router])
 
-  const handleLogin = (email: string) => {
-    setIsAuthenticated(true)
-    localStorage.setItem("isAuthenticated", "true")
-    localStorage.setItem("userEmail", email)
-    setCurrentPage("dashboard")
-  }
-
-  const handleLogout = () => {
-    setIsAuthenticated(false)
-    localStorage.removeItem("isAuthenticated")
-    localStorage.removeItem("userEmail")
-    setCurrentPage("login")
-  }
-
-  if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />
-  }
-
-  if (currentPage === "stats") {
-    return <Stats onBack={() => setCurrentPage("dashboard")} onLogout={handleLogout} />
-  }
-
-  return <Dashboard onLogout={handleLogout} onNavigateToStats={() => setCurrentPage("stats")} />
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="text-muted-foreground">Loading...</div>
+    </div>
+  )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Edit, Trash2, X } from "lucide-react"
+import { Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Edit, Trash2, X, File } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ChatHoverCard } from "@/components/chat-hover-card"
 import { ProjectConversationActionsMenu } from "@/components/project-conversation-actions-menu"

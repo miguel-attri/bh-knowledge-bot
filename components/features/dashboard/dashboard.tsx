@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { Search, Settings, LogOut, MessageCircle, ChevronDown, Plus, Mic, Send, BarChart3, FolderOpen, ArrowUp } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -21,6 +22,7 @@ import { FolderPlus } from "lucide-react"
 interface DashboardProps {
   onLogout: () => void
   onNavigateToStats?: () => void
+  initialConversationId?: string
 }
 
 interface Conversation {
@@ -340,10 +342,11 @@ const markdownComponents = {
   ),
 }
 
-export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
+export function Dashboard({ onLogout, onNavigateToStats, initialConversationId }: DashboardProps) {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [conversationsList, setConversationsList] = useState<Conversation[]>(initialConversations)
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(initialConversationId || null)
   const [messagesByConversation, setMessagesByConversation] = useState<
     Record<string, ConversationMessage[]>
   >(initialMessagesByConversation)
@@ -628,17 +631,11 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
   }
 
   const handleAddSession = () => {
-    setActiveConversationId(null)
-    setActiveProjectId(null)
-    setSearchQuery("")
-    resetBotTyping()
+    router.push("/dashboard")
   }
 
   const handleSelectConversation = (conversationId: string) => {
-    setActiveConversationId(conversationId)
-    setActiveProjectId(null)
-    setSearchQuery("")
-    resetBotTyping()
+    router.push(`/chat/${conversationId}`)
   }
 
   const handleSelectProject = (projectId: string) => {
@@ -703,13 +700,13 @@ export function Dashboard({ onLogout, onNavigateToStats }: DashboardProps) {
       setActiveConversationId(conversationId)
 
       // If we're in a project context, add this conversation to that project
-      if (activeProjectId) {
+      if (activeProjectId && conversationId) {
         setProjects((prev) =>
           prev.map((project) => {
             if (project.id === activeProjectId) {
               return {
                 ...project,
-                conversationIds: [...project.conversationIds, conversationId],
+                conversationIds: [...project.conversationIds, conversationId!],
                 lastUpdated: now,
               }
             }

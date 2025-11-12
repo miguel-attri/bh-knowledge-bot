@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation"
 import { Search, Settings, LogOut, MessageCircle, ChevronDown, Plus, Mic, Send, BarChart3, FolderOpen, ArrowUp } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ChatHoverCard } from "@/components/chat-hover-card"
 import { SuggestedQuestions } from "@/components/suggested-questions"
 import { ProjectFolder, type Project, type ProjectFile } from "@/components/project-folder"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
@@ -1038,39 +1038,31 @@ export function ChatView({ onLogout, onNavigateToStats, initialConversationId, i
                             {dateConversations.map((conv) => {
                               const isActive = conv.id === activeConversationId
                               return (
-                                <ChatHoverCard
-                                  key={conv.id}
-                                  metadata={{
-                                    createdAt: conv.createdAt,
-                                    lastUpdated: conv.lastUpdated,
-                                  }}
-                                >
-                                  <div className={`flex items-center gap-3 rounded-lg px-3 py-2 transition group ${
-                                    isActive ? "bg-muted" : "hover:bg-muted"
-                                  }`}>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleSelectConversation(conv.id)}
-                                      className="flex-1 flex items-center gap-3 text-left min-w-0"
-                                    >
-                                      <span className="text-sm text-foreground truncate">{conv.title}</span>
-                                    </button>
-                                    <ConversationActionsMenu
-                                      conversationId={conv.id}
-                                      conversationTitle={conv.title}
-                                      projects={projects}
-                                      onRename={() => {
-                                        setSelectedConversationId(conv.id)
-                                        setShowRenameDialog(true)
-                                      }}
-                                      onDelete={() => {
-                                        setSelectedConversationId(conv.id)
-                                        setShowDeleteDialog(true)
-                                      }}
-                                      onAddToProject={handleAddConversationToProject}
-                                    />
-                                  </div>
-                                </ChatHoverCard>
+                                <div key={conv.id} className={`flex items-center gap-3 rounded-lg px-3 py-2 transition group ${
+                                  isActive ? "bg-muted" : "hover:bg-muted"
+                                }`}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSelectConversation(conv.id)}
+                                    className="flex-1 flex items-center gap-3 text-left min-w-0"
+                                  >
+                                    <span className="text-sm text-foreground truncate">{conv.title}</span>
+                                  </button>
+                                  <ConversationActionsMenu
+                                    conversationId={conv.id}
+                                    conversationTitle={conv.title}
+                                    projects={projects}
+                                    onRename={() => {
+                                      setSelectedConversationId(conv.id)
+                                      setShowRenameDialog(true)
+                                    }}
+                                    onDelete={() => {
+                                      setSelectedConversationId(conv.id)
+                                      setShowDeleteDialog(true)
+                                    }}
+                                    onAddToProject={handleAddConversationToProject}
+                                  />
+                                </div>
                               )
                             })}
                           </div>
@@ -1087,7 +1079,30 @@ export function ChatView({ onLogout, onNavigateToStats, initialConversationId, i
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <header className="flex items-center justify-end px-6 py-4 bg-background/80 backdrop-blur">
+        <header className="flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur">
+          {/* Date info for active conversation */}
+          <div className="text-xs text-muted-foreground space-y-0.5">
+            {activeConversation && (() => {
+              const createdAt = new Date(activeConversation.createdAt)
+              const lastUpdated = new Date(activeConversation.lastUpdated)
+              const createdDateStr = format(createdAt, "MMM dd, yyyy")
+              const lastUpdatedDateStr = format(lastUpdated, "MMM dd, yyyy")
+              const showLastUpdated = createdDateStr !== lastUpdatedDateStr
+
+              return (
+                <>
+                  {showLastUpdated && (
+                    <div>
+                      <span className="font-medium">Last Updated:</span> {lastUpdatedDateStr}
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-medium">Created:</span> {createdDateStr}
+                  </div>
+                </>
+              )
+            })()}
+          </div>
           <div className="relative" ref={accountMenuRef}>
             <button
               type="button"

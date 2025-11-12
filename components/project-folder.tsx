@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react"
 import { Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Edit, Trash2, X, File } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ChatHoverCard } from "@/components/chat-hover-card"
 import { ProjectConversationActionsMenu } from "@/components/project-conversation-actions-menu"
 
 export interface ProjectFile {
@@ -180,37 +179,29 @@ export function ProjectFolder({
         <div className="space-y-1 mt-1">
           {/* Conversations */}
           {projectConversations.map((conversation) => (
-            <ChatHoverCard
-              key={conversation.id}
-              metadata={{
-                createdAt: conversation.createdAt,
-                lastUpdated: conversation.lastUpdated,
-              }}
-            >
-              <div className={`flex items-center gap-3 rounded-lg px-3 py-2 transition group/item ${
-                currentConversationId === conversation.id ? "bg-muted" : "hover:bg-muted"
-              }`}>
-                <div className="w-6 flex-shrink-0"></div>
-                <button
-                  type="button"
-                  onClick={() => onSelectConversation(conversation.id)}
-                  className="flex-1 flex items-center gap-3 text-left min-w-0"
-                >
-                  <span className="text-sm text-foreground truncate">{conversation.title}</span>
-                </button>
-                {(onRemoveConversation || onRenameConversation || onDeleteConversation) && (
-                  <ProjectConversationActionsMenu
-                    conversationId={conversation.id}
-                    conversationTitle={conversation.title}
-                    projectId={project.id}
-                    projectName={project.name}
-                    onRename={() => onRenameConversation?.(conversation.id)}
-                    onDelete={() => onDeleteConversation?.(conversation.id)}
-                    onRemoveFromProject={(projectId, conversationId) => onRemoveConversation?.(projectId, conversationId)}
-                  />
-                )}
-              </div>
-            </ChatHoverCard>
+            <div key={conversation.id} className={`flex items-center gap-3 rounded-lg px-3 py-2 transition group/item ${
+              currentConversationId === conversation.id ? "bg-muted" : "hover:bg-muted"
+            }`}>
+              <div className="w-6 flex-shrink-0"></div>
+              <button
+                type="button"
+                onClick={() => onSelectConversation(conversation.id)}
+                className="flex-1 flex items-center gap-3 text-left min-w-0"
+              >
+                <span className="text-sm text-foreground truncate">{conversation.title}</span>
+              </button>
+              {(onRemoveConversation || onRenameConversation || onDeleteConversation) && (
+                <ProjectConversationActionsMenu
+                  conversationId={conversation.id}
+                  conversationTitle={conversation.title}
+                  projectId={project.id}
+                  projectName={project.name}
+                  onRename={() => onRenameConversation?.(conversation.id)}
+                  onDelete={() => onDeleteConversation?.(conversation.id)}
+                  onRemoveFromProject={(projectId, conversationId) => onRemoveConversation?.(projectId, conversationId)}
+                />
+              )}
+            </div>
           ))}
 
           {/* Files */}

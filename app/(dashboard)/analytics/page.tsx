@@ -7,7 +7,7 @@ export default function AnalyticsPage() {
   const router = useRouter()
 
   const handleBack = () => {
-    router.push("/dashboard")
+    router.push("/chat")
   }
 
   const handleLogout = () => {

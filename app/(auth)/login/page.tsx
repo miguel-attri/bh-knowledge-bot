@@ -9,7 +9,7 @@ export default function LoginPage() {
   const handleLogin = (email: string) => {
     localStorage.setItem("isAuthenticated", "true")
     localStorage.setItem("userEmail", email)
-    router.push("/dashboard")
+    router.push("/chat")
   }
 
   return <Login onLogin={handleLogin} />

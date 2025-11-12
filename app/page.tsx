@@ -9,7 +9,7 @@ export default function Home() {
   useEffect(() => {
     const isAuthenticated = localStorage.getItem("isAuthenticated")
     if (isAuthenticated === "true") {
-      router.push("/dashboard")
+      router.push("/chat")
     } else {
       router.push("/login")
     }

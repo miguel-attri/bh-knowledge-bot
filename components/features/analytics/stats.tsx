@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { TrendingUp, Filter, ChevronDown, ChevronRight, ChevronLeft, LogOut, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -108,6 +109,7 @@ const mockThreadsByTopic: Record<string, ConversationThread[]> = {
 }
 
 export function Stats({ onBack, onLogout }: StatsProps) {
+  const router = useRouter()
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "all">("30d")
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set())
@@ -178,7 +180,10 @@ export function Stats({ onBack, onLogout }: StatsProps) {
       <div className="w-80 border-r border-border bg-card flex flex-col">
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-center">
-            <div className="relative h-12 w-full flex-shrink-0">
+            <button
+              onClick={() => router.push("/")}
+              className="relative h-12 w-full flex-shrink-0 cursor-pointer"
+            >
               <Image
                 src="/beaird-harris-logo.png"
                 alt="Beaird Harris"
@@ -187,7 +192,7 @@ export function Stats({ onBack, onLogout }: StatsProps) {
                 className="h-12 w-full object-contain"
                 priority
               />
-            </div>
+            </button>
           </div>
         </div>
 

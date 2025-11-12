@@ -677,7 +677,7 @@ export function Dashboard({ onLogout, onNavigateToStats, initialConversationId, 
   }
 
   const handleAddSession = () => {
-    router.push("/dashboard")
+    router.push("/chat")
   }
 
   const handleSelectConversation = (conversationId: string) => {
@@ -911,7 +911,10 @@ export function Dashboard({ onLogout, onNavigateToStats, initialConversationId, 
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-center">
-            <div className="relative h-12 w-full flex-shrink-0">
+            <button
+              onClick={() => router.push("/")}
+              className="relative h-12 w-full flex-shrink-0 cursor-pointer"
+            >
               <Image
                 src="/beaird-harris-logo.png"
                 alt="Beaird Harris"
@@ -920,7 +923,7 @@ export function Dashboard({ onLogout, onNavigateToStats, initialConversationId, 
                 className="h-12 w-full object-contain"
                 priority
               />
-            </div>
+            </button>
           </div>
           </div>
 

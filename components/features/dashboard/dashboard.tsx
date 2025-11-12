@@ -23,6 +23,7 @@ interface DashboardProps {
   onLogout: () => void
   onNavigateToStats?: () => void
   initialConversationId?: string
+  initialProjectId?: string
 }
 
 interface Conversation {
@@ -342,7 +343,7 @@ const markdownComponents = {
   ),
 }
 
-export function Dashboard({ onLogout, onNavigateToStats, initialConversationId }: DashboardProps) {
+export function Dashboard({ onLogout, onNavigateToStats, initialConversationId, initialProjectId }: DashboardProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [conversationsList, setConversationsList] = useState<Conversation[]>(initialConversations)
@@ -361,7 +362,7 @@ export function Dashboard({ onLogout, onNavigateToStats, initialConversationId }
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [pendingSuggestion, setPendingSuggestion] = useState<string | null>(null)
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(initialProjectId || null)
 
   // Suggested follow-up questions - can be customized per conversation
   const getSuggestedQuestions = (conversationId: string | null): string[] => {
@@ -413,9 +414,10 @@ export function Dashboard({ onLogout, onNavigateToStats, initialConversationId }
     }
 
     setProjects((prev) => [...prev, newProject])
-    setActiveConversationId(null)
-    setActiveProjectId(newProject.id)
     setShowCreateProjectDialog(false)
+
+    // Navigate to the new project
+    router.push(`/project/${newProject.id}`)
 
     // If there's a pending suggestion, set it as the message input
     if (pendingSuggestion) {
@@ -613,12 +615,56 @@ export function Dashboard({ onLogout, onNavigateToStats, initialConversationId }
 
   const hasMessages = activeMessages.length > 0 || isBotTyping
 
+  // Load data from localStorage on mount (after hydration)
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  useEffect(() => {
+    if (!isHydrated) {
+      const storedConversations = localStorage.getItem('conversations')
+      const storedMessages = localStorage.getItem('messages')
+      const storedProjects = localStorage.getItem('projects')
+
+      if (storedConversations) {
+        setConversationsList(JSON.parse(storedConversations))
+      }
+      if (storedMessages) {
+        setMessagesByConversation(JSON.parse(storedMessages))
+      }
+      if (storedProjects) {
+        setProjects(JSON.parse(storedProjects))
+      }
+
+      setIsHydrated(true)
+    }
+  }, [isHydrated])
+
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
     }
   }, [activeMessages, isBotTyping])
+
+  // Persist projects to localStorage (only after hydration)
+  useEffect(() => {
+    if (isHydrated && typeof window !== 'undefined') {
+      localStorage.setItem('projects', JSON.stringify(projects))
+    }
+  }, [projects, isHydrated])
+
+  // Persist conversations to localStorage (only after hydration)
+  useEffect(() => {
+    if (isHydrated && typeof window !== 'undefined') {
+      localStorage.setItem('conversations', JSON.stringify(conversationsList))
+    }
+  }, [conversationsList, isHydrated])
+
+  // Persist messages to localStorage (only after hydration)
+  useEffect(() => {
+    if (isHydrated && typeof window !== 'undefined') {
+      localStorage.setItem('messages', JSON.stringify(messagesByConversation))
+    }
+  }, [messagesByConversation, isHydrated])
 
   // Don't auto-create a session on mount - show the default "What's on the agenda" view
   // useEffect removed - sessions are created only when user sends first message
@@ -638,11 +684,12 @@ export function Dashboard({ onLogout, onNavigateToStats, initialConversationId }
     router.push(`/chat/${conversationId}`)
   }
 
+  const handleSelectProjectConversation = (projectId: string, conversationId: string) => {
+    router.push(`/project/${projectId}/chat/${conversationId}`)
+  }
+
   const handleSelectProject = (projectId: string) => {
-    setActiveConversationId(null)
-    setActiveProjectId(projectId)
-    setSearchQuery("")
-    resetBotTyping()
+    router.push(`/project/${projectId}`)
   }
 
   const handleRenameConversation = (conversationId: string, newTitle: string) => {
@@ -699,7 +746,7 @@ export function Dashboard({ onLogout, onNavigateToStats, initialConversationId }
       setConversationsList((prev) => [newConversation, ...prev])
       setActiveConversationId(conversationId)
 
-      // If we're in a project context, add this conversation to that project
+      // If we're in a project context, add this conversation to that project and navigate
       if (activeProjectId && conversationId) {
         setProjects((prev) =>
           prev.map((project) => {
@@ -713,6 +760,11 @@ export function Dashboard({ onLogout, onNavigateToStats, initialConversationId }
             return project
           }),
         )
+        // Navigate to the project chat route
+        router.push(`/project/${activeProjectId}/chat/${conversationId}`)
+      } else {
+        // Navigate to regular chat route
+        router.push(`/chat/${conversationId}`)
       }
     }
 
@@ -924,7 +976,7 @@ export function Dashboard({ onLogout, onNavigateToStats, initialConversationId }
                       conversations={conversationsList}
                       currentConversationId={activeConversationId || ""}
                       activeProjectId={activeProjectId}
-                      onSelectConversation={handleSelectConversation}
+                      onSelectConversation={(conversationId) => handleSelectProjectConversation(project.id, conversationId)}
                       onSelectProject={handleSelectProject}
                       onRenameProject={handleRenameProject}
                       onRemoveConversation={handleRemoveConversationFromProject}
@@ -1176,7 +1228,7 @@ export function Dashboard({ onLogout, onNavigateToStats, initialConversationId }
                                   return (
                                     <button
                                       key={conv.id}
-                                      onClick={() => handleSelectConversation(conv.id)}
+                                      onClick={() => handleSelectProjectConversation(activeProjectId!, conv.id)}
                                       className={`w-full text-left px-4 py-4 transition flex items-start justify-between gap-4 ${
                                         isActive ? "bg-muted" : "hover:bg-muted"
                                       }`}

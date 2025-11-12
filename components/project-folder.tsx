@@ -67,10 +67,12 @@ export function ProjectFolder({
   projects = [],
   onAddToProject,
 }: ProjectFolderProps) {
-  const [isExpanded, setIsExpanded] = useState(true)
+  const projectConversations = conversations.filter((conv) => project.conversationIds.includes(conv.id))
+  const hasActiveConversation = projectConversations.some((conv) => conv.id === currentConversationId)
+
+  const [isExpanded, setIsExpanded] = useState(hasActiveConversation)
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const projectConversations = conversations.filter((conv) => project.conversationIds.includes(conv.id))
 
   const fileInputId = `file-input-${project.id}`
 

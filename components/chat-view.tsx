@@ -19,7 +19,7 @@ import { RenameProjectDialog } from "@/components/rename-project-dialog"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 import { FolderPlus } from "lucide-react"
 
-interface DashboardProps {
+interface ChatViewProps {
   onLogout: () => void
   onNavigateToStats?: () => void
   initialConversationId?: string
@@ -343,7 +343,7 @@ const markdownComponents = {
   ),
 }
 
-export function Dashboard({ onLogout, onNavigateToStats, initialConversationId, initialProjectId }: DashboardProps) {
+export function ChatView({ onLogout, onNavigateToStats, initialConversationId, initialProjectId }: ChatViewProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [conversationsList, setConversationsList] = useState<Conversation[]>(initialConversations)

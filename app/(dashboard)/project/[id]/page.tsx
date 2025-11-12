@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams, useRouter } from "next/navigation"
-import { Dashboard } from "@/components/features/dashboard/dashboard"
+import { ChatView } from "@/components/chat-view"
 
 export default function ProjectPage() {
   const params = useParams()
@@ -19,7 +19,7 @@ export default function ProjectPage() {
   }
 
   return (
-    <Dashboard
+    <ChatView
       onLogout={handleLogout}
       onNavigateToStats={handleNavigateToStats}
       initialProjectId={projectId}

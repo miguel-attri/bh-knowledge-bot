@@ -1,6 +1,6 @@
 "use client"
 
-import { Dashboard } from "@/components/features/dashboard/dashboard"
+import { ChatView } from "@/components/chat-view"
 import { useRouter } from "next/navigation"
 
 export default function DashboardPage() {
@@ -17,7 +17,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <Dashboard
+    <ChatView
       onLogout={handleLogout}
       onNavigateToStats={handleNavigateToStats}
     />

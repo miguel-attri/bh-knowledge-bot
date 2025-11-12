@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Dashboard } from "@/components/features/dashboard/dashboard"
+import { ChatView } from "@/components/chat-view"
 
 export default function ChatPage() {
   const params = useParams()
@@ -19,10 +19,8 @@ export default function ChatPage() {
     router.push("/analytics")
   }
 
-  // For now, we pass the conversation ID to the Dashboard component
-  // In a future refactor, we'll extract the chat view into its own component
   return (
-    <Dashboard
+    <ChatView
       onLogout={handleLogout}
       onNavigateToStats={handleNavigateToStats}
       initialConversationId={conversationId}

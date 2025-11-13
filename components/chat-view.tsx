@@ -17,6 +17,8 @@ import { ConversationActionsMenu } from "@/components/conversation-actions-menu"
 import { RenameConversationDialog } from "@/components/rename-conversation-dialog"
 import { RenameProjectDialog } from "@/components/rename-project-dialog"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
+import { IssueReportDialog } from "@/components/issue-report-dialog"
+import { IssueReportButton } from "@/components/issue-report-button"
 import { FolderPlus } from "lucide-react"
 
 interface ChatViewProps {
@@ -359,6 +361,7 @@ export function ChatView({ onLogout, onNavigateToStats, initialConversationId, i
   const [showRenameDialog, setShowRenameDialog] = useState(false)
   const [showRenameProjectDialog, setShowRenameProjectDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showIssueReportDialog, setShowIssueReportDialog] = useState(false)
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [pendingSuggestion, setPendingSuggestion] = useState<string | null>(null)
@@ -1053,6 +1056,7 @@ export function ChatView({ onLogout, onNavigateToStats, initialConversationId, i
                                       onClick={() => handleSelectConversation(conv.id)}
                                       className="flex-1 flex items-center gap-3 text-left min-w-0"
                                     >
+                                      <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                                       <span className="text-sm text-foreground truncate">{conv.title}</span>
                                     </button>
                                     <ConversationActionsMenu
@@ -1335,6 +1339,17 @@ export function ChatView({ onLogout, onNavigateToStats, initialConversationId, i
           onDelete={() => handleDeleteConversation(selectedConversation.id)}
         />
       )}
+
+      {/* Issue Report Dialog */}
+      <IssueReportDialog
+        isOpen={showIssueReportDialog}
+        onClose={() => setShowIssueReportDialog(false)}
+        conversationId={activeConversationId || undefined}
+        conversationTitle={selectedConversation?.title}
+      />
+
+      {/* Floating Issue Report Button */}
+      <IssueReportButton onClick={() => setShowIssueReportDialog(true)} />
     </div>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Edit, Trash2, X, File } from "lucide-react"
+import { Folder, FolderOpen, ChevronRight, ChevronDown, MoreVertical, Edit, Trash2, X, File, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProjectConversationActionsMenu } from "@/components/project-conversation-actions-menu"
 
@@ -188,6 +188,7 @@ export function ProjectFolder({
                 onClick={() => onSelectConversation(conversation.id)}
                 className="flex-1 flex items-center gap-3 text-left min-w-0"
               >
+                <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-sm text-foreground truncate">{conversation.title}</span>
               </button>
               {(onRemoveConversation || onRenameConversation || onDeleteConversation) && (
